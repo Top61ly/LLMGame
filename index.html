@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Empire - 大模型公司模拟经营</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 顶部状态栏 -->
+    <header class="top-bar">
+        <div class="company-info">
+            <h1>🏢 AI Empire Inc.</h1>
+            <div class="level-bar">
+                <span>Lv.<span id="level">1</span></span>
+                <div class="exp-bar">
+                    <div class="exp-fill" id="expFill"></div>
+                </div>
+                <span id="expText">0%</span>
+            </div>
+        </div>
+        <div class="resources">
+            <div class="resource-item">
+                <span class="resource-icon">💰</span>
+                <div class="resource-info">
+                    <div class="resource-value" id="money">$0</div>
+                    <div class="resource-rate">⬆ +<span id="moneyRate">0</span>/s</div>
+                </div>
+            </div>
+            <div class="resource-item">
+                <span class="resource-icon">⚡</span>
+                <div class="resource-info">
+                    <div class="resource-value" id="compute">0</div>
+                    <div class="resource-rate"><span id="computeRate">0</span>/s</div>
+                </div>
+            </div>
+            <div class="resource-item">
+                <span class="resource-icon">👥</span>
+                <div class="resource-info">
+                    <div class="resource-value" id="users">0</div>
+                    <div class="resource-rate">+<span id="userGrowth">0</span>%/h</div>
+                </div>
+            </div>
+            <div class="resource-item">
+                <span class="resource-icon">📊</span>
+                <div class="resource-info">
+                    <div class="resource-value" id="data">0 TB</div>
+                    <div class="resource-rate"><span id="dataRate">0</span>/s</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体三栏布局 -->
+    <main class="main-container">
+        <!-- 左栏：导航 -->
+        <aside class="left-sidebar">
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="factory" onclick="switchTab('factory')">
+                    <span class="tab-icon">🏭</span>
+                    <span class="tab-text">工厂</span>
+                </button>
+                <button class="nav-tab" data-tab="research" onclick="switchTab('research')">
+                    <span class="tab-icon">🔬</span>
+                    <span class="tab-text">研发</span>
+                </button>
+                <button class="nav-tab" data-tab="models" onclick="switchTab('models')">
+                    <span class="tab-icon">🤖</span>
+                    <span class="tab-text">模型</span>
+                </button>
+                <button class="nav-tab" data-tab="market" onclick="switchTab('market')">
+                    <span class="tab-icon">📈</span>
+                    <span class="tab-text">市场</span>
+                </button>
+                <button class="nav-tab" data-tab="invest" onclick="switchTab('invest')">
+                    <span class="tab-icon">💎</span>
+                    <span class="tab-text">投资</span>
+                </button>
+            </nav>
+
+            <div class="stats-panel">
+                <h3>📊 总览</h3>
+                <div class="stat-item">
+                    <div class="stat-label">算力/秒</div>
+                    <div class="stat-value" id="statCompute">0 ⚡</div>
+                    <div class="stat-change positive" id="statComputeChange">+0%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">收入/秒</div>
+                    <div class="stat-value" id="statMoney">$0</div>
+                    <div class="stat-change positive" id="statMoneyChange">+0%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">累计训练</div>
+                    <div class="stat-value" id="totalClicks">0 次</div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <div class="stat-label">🏆 里程碑</div>
+                </div>
+                <div class="milestone-item">⭐ IPO次数: <span id="prestigeCount">0</span></div>
+                <div class="milestone-item">⭐ 游戏时长: <span id="playTime">0m</span></div>
+                <div class="milestone-item">⭐ 成就: <span id="achievements">0/50</span></div>
+            </div>
+        </aside>
+
+        <!-- 中间：主内容区 -->
+        <section class="main-content">
+            <!-- 工厂页面 -->
+            <div id="factory" class="content-panel active">
+                <!-- 手动训练区 -->
+                <div class="click-zone" id="clickZone" onclick="manualTrain()">
+                    <div class="click-icon">🖱️</div>
+                    <div class="click-text">手动训练数据</div>
+                    <div class="click-value" id="clickValue">+0</div>
+                    <div class="click-hint">(点击或按 SPACE)</div>
+                </div>
+                <div class="click-info">
+                    当前算力倍率: ×<span id="clickMultiplier">1</span>
+                </div>
+
+                <!-- 硬件设施 -->
+                <div class="section-header">💻 计算硬件</div>
+                
+                <div class="building-card" id="building-cpu">
+                    <div class="building-header">
+                        <div class="building-name">
+                            <span class="building-icon">🖥️</span>
+                            <span>CPU集群</span>
+                        </div>
+                        <div class="building-stats">
+                            <span class="building-count">👁️ <span id="cpu-count">0</span></span>
+                            <span class="building-production">📈 <span id="cpu-production">0</span>/s</span>
+                        </div>
+                    </div>
+                    <div class="building-info">
+                        <div>成本: $<span id="cpu-cost">50</span></div>
+                        <div>回本: <span id="cpu-roi">∞</span></div>
+                    </div>
+                    <div class="building-actions">
+                        <button class="btn-buy" onclick="buyBuilding('cpu', 1)">买 1</button>
+                        <button class="btn-buy" onclick="buyBuilding('cpu', 10)">买 10</button>
+                        <button class="btn-buy" onclick="buyBuilding('cpu', 100)">买 100</button>
+                        <button class="btn-buy-max" onclick="buyBuildingMax('cpu')">买到MAX</button>
+                    </div>
+                    <div class="building-milestone">
+                        <div class="milestone-bar">
+                            <div class="milestone-fill" id="cpu-milestone-fill"></div>
+                        </div>
+                        <div class="milestone-text">
+                            <span id="cpu-milestone-text">0/25</span>
+                            <span>→ 产出 ×2</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="building-card" id="building-gpu">
+                    <div class="building-header">
+                        <div class="building-name">
+                            <span class="building-icon">🎮</span>
+                            <span>GPU服务器</span>
+                        </div>
+                        <div class="building-stats">
+                            <span class="building-count">👁️ <span id="gpu-count">0</span></span>
+                            <span class="building-production">📈 <span id="gpu-production">0</span>/s</span>
+                        </div>
+                    </div>
+                    <div class="building-info">
+                        <div>成本: $<span id="gpu-cost">500</span></div>
+                        <div>回本: <span id="gpu-roi">∞</span></div>
+                    </div>
+                    <div class="building-actions">
+                        <button class="btn-buy" onclick="buyBuilding('gpu', 1)">买 1</button>
+                        <button class="btn-buy" onclick="buyBuilding('gpu', 10)">买 10</button>
+                        <button class="btn-buy-max" onclick="buyBuildingMax('gpu')">买到MAX</button>
+                    </div>
+                    <div class="building-milestone">
+                        <div class="milestone-bar">
+                            <div class="milestone-fill" id="gpu-milestone-fill"></div>
+                        </div>
+                        <div class="milestone-text">
+                            <span id="gpu-milestone-text">0/25</span>
+                            <span>→ 产出 ×2</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="building-card locked" id="building-tpu">
+                    <div class="building-header">
+                        <div class="building-name">
+                            <span class="building-icon">⚙️</span>
+                            <span>TPU阵列</span>
+                        </div>
+                        <div class="building-stats">
+                            <span>🔒 未解锁</span>
+                        </div>
+                    </div>
+                    <div class="building-info">
+                        <div>需要: GPU服务器达到 50</div>
+                        <div>预览产出: ~5000/s</div>
+                    </div>
+                </div>
+
+                <!-- 人力资源 -->
+                <div class="section-header">👨‍💻 人力资源</div>
+                
+                <div class="building-card" id="building-engineer">
+                    <div class="building-header">
+                        <div class="building-name">
+                            <span class="building-icon">👨‍💻</span>
+                            <span>初级工程师</span>
+                        </div>
+                        <div class="building-stats">
+                            <span class="building-count">👁️ <span id="engineer-count">0</span></span>
+                            <span class="building-production">💰 <span id="engineer-production">0</span>/s</span>
+                        </div>
+                    </div>
+                    <div class="building-info">
+                        <div>成本: $<span id="engineer-cost">5000</span></div>
+                        <div>效果: 算力效率 +0.5%/人</div>
+                    </div>
+                    <div class="building-actions">
+                        <button class="btn-buy" onclick="buyBuilding('engineer', 1)">雇佣 1</button>
+                        <button class="btn-buy" onclick="buyBuilding('engineer', 10)">雇佣 10</button>
+                        <button class="btn-buy-max" onclick="buyBuildingMax('engineer')">雇佣MAX</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 研发页面 -->
+            <div id="research" class="content-panel">
+                <h2>🔬 研发中心</h2>
+                <p class="placeholder">研发系统开发中...</p>
+                <p>解锁各类技术升级，提升全局效率</p>
+            </div>
+
+            <!-- 模型页面 -->
+            <div id="models" class="content-panel">
+                <h2>🤖 AI模型中心</h2>
+                <p class="placeholder">模型系统开发中...</p>
+                <p>训练和部署各类AI模型，获取持续收益</p>
+            </div>
+
+            <!-- 市场页面 -->
+            <div id="market" class="content-panel">
+                <h2>📈 市场营销</h2>
+                <p class="placeholder">市场系统开发中...</p>
+                <p>推广你的产品，获取更多用户</p>
+            </div>
+
+            <!-- 投资页面 -->
+            <div id="invest" class="content-panel">
+                <h2>💎 投资系统 (IPO重置)</h2>
+                <p class="placeholder">投资系统开发中...</p>
+                <p>重置进度，获得投资点数，解锁永久加成</p>
+            </div>
+        </section>
+
+        <!-- 右栏：任务与事件 -->
+        <aside class="right-sidebar">
+            <div class="objective-panel">
+                <h3>🎯 当前任务</h3>
+                <div class="objective-item">
+                    <input type="checkbox" disabled>
+                    <div class="objective-info">
+                        <div class="objective-title">购买第一个CPU</div>
+                        <div class="objective-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <span>0/1</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="objective-item">
+                    <input type="checkbox" disabled>
+                    <div class="objective-info">
+                        <div class="objective-title">累计赚取 $10,000</div>
+                        <div class="objective-progress">
+                            <span id="moneyObjective">$0 / $10,000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="objective-item">
+                    <input type="checkbox" disabled>
+                    <div class="objective-info">
+                        <div class="objective-title">购买10个GPU</div>
+                        <div class="objective-progress">
+                            <span>0/10</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="event-panel">
+                <h3>📰 新闻/事件</h3>
+                <div id="eventLog">
+                    <div class="event-item info">
+                        <div class="event-time">刚刚</div>
+                        <div class="event-text">欢迎来到AI帝国！开始你的创业之旅吧</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="achievement-panel">
+                <h3>🏆 成就进度</h3>
+                <div class="achievement-item">
+                    <div class="achievement-name">💎 初始资金</div>
+                    <div class="achievement-progress">
+                        <div class="progress-bar small">
+                            <div class="progress-fill" id="ach1-fill"></div>
+                        </div>
+                        <span id="ach1-text">$0 / $100K</span>
+                    </div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-name">⚡ 算力先锋</div>
+                    <div class="achievement-progress">
+                        <div class="progress-bar small">
+                            <div class="progress-fill" id="ach2-fill"></div>
+                        </div>
+                        <span id="ach2-text">0 / 1000/s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="utility-panel">
+                <button class="utility-btn" onclick="saveGame()">💾 手动保存</button>
+                <button class="utility-btn" onclick="resetGame()">🔄 重置游戏</button>
+            </div>
+        </aside>
+    </main>
+
+    <!-- 浮动数字效果容器 -->
+    <div id="floatingNumbers"></div>
+
+    <script src="game.js"></script>
+</body>
+</html>
