@@ -75,6 +75,24 @@ class AIEmpireGame {
             arpu: 0,
         };
 
+        // ========== 热点新闻 ==========
+        this.aiNews = [
+            { type: 'breakthrough', title: 'Meta 发布 Llama-Next 多模态模型', desc: '性能领先 ChatGPT-5，市场反响热烈', impact: 'hype', value: 2, emoji: '🚀', time: '2h ago' },
+            { type: 'policy', title: '欧盟通过《AI 责任法案》', desc: '要求透露训练数据来源，合规成本上升', impact: 'ping', value: 8, emoji: '📋', time: '4h ago' },
+            { type: 'mystery', title: '某 AI 系统出现异常自主行为', desc: '官方称系统更新，但部分专家表示存疑', impact: 'random', value: 3, emoji: '🤖', time: '6h ago' },
+            { type: 'funding', title: 'OpenAI 获得 100 亿美元融资', desc: '用于下一代模型研发和基础设施建设', impact: 'capacity', value: 5, emoji: '📈', time: '8h ago' },
+            { type: 'breakthrough', title: '国际团队突破推理速度瓶颈', desc: '新算法使 AI 推理速度提升 300%', impact: 'hype', value: 3, emoji: '🚀', time: '12h ago' },
+            { type: 'policy', title: '美国发布《AI 行政命令》', desc: '要求政府部门评估大模型风险', impact: 'ping', value: 5, emoji: '📋', time: '1d ago' },
+            { type: 'mystery', title: 'Google 的 Gemini 通过改进版图灵测试', desc: '多项指标首次超过人类水平', impact: 'random', value: 2, emoji: '🤖', time: '1d ago' },
+            { type: 'funding', title: 'AI 芯片初创公司融资 5 亿美元', desc: '开发 AI 特化的处理器架构', impact: 'capacity', value: 3, emoji: '📈', time: '2d ago' },
+        ];
+        this.currentNewsIndex = 0;
+        this.newsAutoplayTimer = null;
+        this.newsAutoPaused = false;
+
+        // ========== 事件日志 ==========
+        this.eventLogs = ['游戏已启动'];
+
         this.initGame();
     }
 
@@ -93,6 +111,7 @@ class AIEmpireGame {
             welcomePage.classList.remove('active');
             gamePage.classList.add('active');
             this.initUI();
+            this.initBottomPanel();
             this.startGameLoop();
         } else {
             // 没有存档，显示欢迎页面
@@ -123,6 +142,60 @@ class AIEmpireGame {
                 this.publishModel();
             }
         });
+    }
+
+    initBottomPanel() {
+        // 标签切换
+        const tabBtns = document.querySelectorAll('.bottom-tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.switchBottomPanel(btn.dataset.panel);
+            });
+        });
+
+        // 折叠/展开按钮
+        const toggleBtn = document.getElementById('toggleBottomPanel');
+        toggleBtn.addEventListener('click', () => {
+            const panel = document.querySelector('.bottom-panel');
+            panel.classList.toggle('collapsed');
+        });
+
+        // 新闻播放控制
+        const pauseNewsBtn = document.getElementById('pauseNewsBtn');
+        pauseNewsBtn.addEventListener('click', () => {
+            this.newsAutoPaused = !this.newsAutoPaused;
+            pauseNewsBtn.textContent = this.newsAutoPaused ? '▶ 继续' : '⏸ 暂停';
+        });
+
+        // 初始化新闻显示
+        this.showNews(0);
+        this.startNewsAutoplay();
+
+        // 添加初始日志
+        this.addBottomEventLog(`游戏已启动 - 欢迎来到 ${this.modelName} 的帝国！`, 'event');
+
+        // 默认显示日志
+        this.switchBottomPanel('logs');
+    }
+
+    switchBottomPanel(panelName) {
+        // 隐藏所有面板
+        const allPanels = document.querySelectorAll('.bottom-panel-content');
+        allPanels.forEach(p => p.classList.remove('active'));
+
+        // 显示选中面板
+        const selectedPanel = document.getElementById(`panel-${panelName}`);
+        if (selectedPanel) {
+            selectedPanel.classList.add('active');
+        }
+
+        // 更新标签按钮状态
+        const allTabs = document.querySelectorAll('.bottom-tab-btn');
+        allTabs.forEach(t => t.classList.remove('active'));
+        const activeTab = document.querySelector(`[data-panel="${panelName}"]`);
+        if (activeTab) {
+            activeTab.classList.add('active');
+        }
     }
 
     showNamingPage() {
@@ -163,6 +236,7 @@ class AIEmpireGame {
         
         // 初始化UI和游戏循环
         this.initUI();
+        this.initBottomPanel();
         this.startGameLoop();
     }
 
@@ -444,7 +518,9 @@ class AIEmpireGame {
                 this.money -= cost;
                 this.buildings[buildingType].count++;
                 this.updateSystemCapacity();
-                this.addLog(`购买 ${this.buildings[buildingType].name} ×1，容量已更新`, 'success');
+                const message = `购买 ${this.buildings[buildingType].name} ×1，容量已更新`;
+                this.addLog(message, 'success');
+                this.addBottomEventLog(message, 'success');
             } else {
                 break;
             }
@@ -473,12 +549,16 @@ class AIEmpireGame {
     publishProduct(productKey) {
         const product = this.products[productKey];
         if (!product.unlocked) {
-            this.addLog(`${product.name} 未解锁`, 'warning');
+            const message = `${product.name} 未解锁`;
+            this.addLog(message, 'warning');
+            this.addBottomEventLog(message, 'warning');
             return;
         }
 
         if (product.developed) {
-            this.addLog(`${product.name} 已发布`, 'warning');
+            const message = `${product.name} 已发布`;
+            this.addLog(message, 'warning');
+            this.addBottomEventLog(message, 'warning');
             return;
         }
 
@@ -492,9 +572,13 @@ class AIEmpireGame {
             // 提升收入乘数
             this.revenueMultiplier *= product.effect;
 
-            this.addLog(`发布 ${product.name}！市场容量 +50K，收入乘数 ×${product.effect}`, 'success');
+            const message = `发布 ${product.name}！市场容量 +50K，收入乘数 ×${product.effect}`;
+            this.addLog(message, 'success');
+            this.addBottomEventLog(message, 'success');
         } else {
-            this.addLog(`资金不足，无法开发 ${product.name}`, 'warning');
+            const message = `资金不足，无法开发 ${product.name}`;
+            this.addLog(message, 'warning');
+            this.addBottomEventLog(message, 'warning');
         }
     }
 
@@ -594,12 +678,6 @@ class AIEmpireGame {
             document.getElementById('modelNameDisplay').textContent = `- ${this.modelName}`;
         }
 
-
-        // 更新左侧栏
-        document.getElementById('sidebarMoney').textContent = `$${this.formatNumber(this.money)}`;
-        document.getElementById('sidebarUsers').textContent = this.formatNumber(this.totalUsers);
-        document.getElementById('sidebarProfit').textContent = `$${this.formatNumber(this.cachedStats.profitPerSecond)}/s`;
-
         // 更新总览页面
         document.getElementById('dashProfit').textContent = `$${this.formatNumber(this.cachedStats.profitPerSecond)}/s`;
         document.getElementById('dashDeltaUsers').textContent = `${this.formatNumber(this.cachedStats.deltaUsersPerSecond)}/s`;
@@ -636,15 +714,54 @@ class AIEmpireGame {
         const seconds = Math.floor(this.gameTime % 60);
         document.getElementById('gameTime').textContent = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-        document.getElementById('pingValue').textContent = `${this.ping.toFixed(0)}ms`;
-        document.getElementById('bugValue').textContent = this.bugCount;
-        document.getElementById('loadRateValue').textContent = `${(this.cachedStats.loadRate * 100).toFixed(1)}%`;
+        // 更新核心数据面板
+        document.getElementById('rightMoney').textContent = `$${this.formatNumber(this.money)}`;
+        document.getElementById('rightUsers').textContent = `${this.formatNumber(this.totalUsers)}`;
+        document.getElementById('rightGrowth').textContent = `+${this.formatNumber(this.cachedStats.deltaUsersPerSecond)}/秒`;
+        
+        // 计算ARPU (每用户收入 = Price × RevMult)
+        const arpu = this.pricePerCopy * this.revenueMultiplier;
+        document.getElementById('rightArpu').textContent = `$${arpu.toFixed(2)}`;
+        
+        document.getElementById('rightProfit').textContent = `+$${this.formatNumber(this.cachedStats.profitPerSecond)}/秒`;
+        
+        // 更新系统容量
+        document.getElementById('rightCapacity').textContent = `${this.formatNumber(this.totalUsers)} / ${this.formatNumber(this.systemCapacity)}`;
+        const capacityPercent = (this.totalUsers / this.systemCapacity * 100).toFixed(1);
+        document.getElementById('rightCapacityBar').style.width = `${Math.min(capacityPercent, 100)}%`;
+        document.getElementById('rightCapacityPercent').textContent = `${capacityPercent}%`;
 
-        // 更新目标进度
-        const targetProfit = 1000;
-        const progress = Math.min(this.cachedStats.profitPerSecond / targetProfit * 100, 100);
-        document.getElementById('profitGoal').style.width = `${progress}%`;
-        document.getElementById('profitGoalText').textContent = `$${this.formatNumber(this.cachedStats.profitPerSecond)}/s / $${this.formatNumber(targetProfit)}`;
+        // 更新系统状态（带颜色）
+        const loadRatePercent = (this.cachedStats.loadRate * 100).toFixed(1);
+        const loadRateEl = document.getElementById('loadRateValue');
+        loadRateEl.textContent = `${loadRatePercent}%`;
+        if (this.cachedStats.loadRate > 0.9) {
+            loadRateEl.style.color = '#ff4444'; // 红色：危险
+        } else if (this.cachedStats.loadRate > 0.7) {
+            loadRateEl.style.color = '#ffa500'; // 橙色：警告
+        } else if (this.cachedStats.loadRate > 0.5) {
+            loadRateEl.style.color = '#ffff00'; // 黄色：正常
+        } else {
+            loadRateEl.style.color = '#00ff88'; // 绿色：健康
+        }
+
+        const pingEl = document.getElementById('pingValue');
+        pingEl.textContent = `${this.ping.toFixed(0)}ms`;
+        if (this.ping > 150) {
+            pingEl.style.color = '#ff4444'; // 红色
+        } else if (this.ping > 50) {
+            pingEl.style.color = '#ffff00'; // 黄色
+        } else {
+            pingEl.style.color = '#00ff88'; // 绿色
+        }
+
+        const bugEl = document.getElementById('bugValue');
+        bugEl.textContent = `${this.bugCount} 个`;
+        if (this.bugCount >= this.bugThreshold) {
+            bugEl.style.color = '#ff4444'; // 红色
+        } else {
+            bugEl.style.color = '#00ff88'; // 绿色
+        }
 
         // 更新建筑数量显示
         for (const key in this.buildings) {
@@ -696,6 +813,91 @@ class AIEmpireGame {
         const m = Math.floor(seconds / 60);
         const s = Math.floor(seconds % 60);
         return `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    // ========== 底部面板系统 ==========
+
+    showNews(index) {
+        if (index < 0 || index >= this.aiNews.length) {
+            this.currentNewsIndex = 0;
+        } else {
+            this.currentNewsIndex = index;
+        }
+
+        const news = this.aiNews[this.currentNewsIndex];
+        const newsContainer = document.getElementById('news-content');
+        
+        if (newsContainer) {
+            // 创建新的新闻项并添加到容器
+            const newsItem = document.createElement('div');
+            newsItem.className = 'news-item';
+            newsItem.innerHTML = `
+                <div class="news-header">
+                    <span class="news-emoji">${news.emoji}</span>
+                    <h4 class="news-title">${news.title}</h4>
+                </div>
+                <p class="news-desc">${news.desc}</p>
+                <div class="news-footer">
+                    <span class="news-time">${news.time}</span>
+                </div>
+            `;
+            
+            newsContainer.appendChild(newsItem);
+            
+            // 自动滚动到底部
+            newsContainer.scrollTop = newsContainer.scrollHeight;
+            
+            // 限制最多显示15条新闻，超过则删除最早的
+            const items = newsContainer.querySelectorAll('.news-item');
+            if (items.length > 15) {
+                items[0].remove();
+            }
+        }
+
+        // 更新计数器 - 显示总共显示的新闻条数
+        const counterEl = document.getElementById('newsCounter');
+        if (counterEl) {
+            counterEl.textContent = `${this.currentNewsIndex + 1}`;
+        }
+    }
+
+    startNewsAutoplay() {
+        // 清除之前的定时器
+        if (this.newsAutoplayTimer) {
+            clearInterval(this.newsAutoplayTimer);
+        }
+
+        this.newsAutoplayTimer = setInterval(() => {
+            if (!this.newsAutoPaused) {
+                // 随机选择一条新闻显示
+                this.currentNewsIndex = Math.floor(Math.random() * this.aiNews.length);
+                this.showNews(this.currentNewsIndex);
+            }
+        }, 5000); // 每5秒自动添加一条新闻
+    }
+
+    addBottomEventLog(message, type = 'info') {
+        const logContainer = document.getElementById('logs-content');
+        if (!logContainer) return;
+
+        const logItem = document.createElement('div');
+        logItem.className = `log-item ${type}`;
+        const timestamp = this.formatTime(this.gameTime);
+        logItem.innerHTML = `
+            <span class="log-time">[${timestamp}]</span>
+            <span class="log-message">${message}</span>
+        `;
+
+        logContainer.appendChild(logItem);
+
+        // 保持最近20条日志
+        const logs = logContainer.querySelectorAll('.log-item');
+        if (logs.length > 20) {
+            logs[0].remove();
+        }
+
+        // 自动滚动到底部
+        logContainer.scrollTop = logContainer.scrollHeight;
     }
 
     startGameLoop() {
