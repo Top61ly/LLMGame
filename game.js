@@ -571,6 +571,9 @@ class AIEmpireGame {
 
             const message = `发布 ${product.name}！市场容量 +50K，收入乘数 ×${product.effect}`;
             this.addBottomEventLog(message, 'success');
+
+            // 重新渲染产品卡片
+            this.renderProducts();
         } else {
             const message = `资金不足，无法开发 ${product.name}`;
             this.addBottomEventLog(message, 'warning');
