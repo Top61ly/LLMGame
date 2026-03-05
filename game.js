@@ -13,7 +13,7 @@ class AIEmpireGame {
         this.lastFrameTime = Date.now();
 
         // ========== 核心参数 ==========
-        this.playersGrowthRate = 0.02; // 用户增长率（初始2%）
+        this.playersGrowthRate = 1; // 用户增长率（初始2%）
         this.hypeValue = 1.0; // Hype 口碑值
         this.hypeTarget = 1.0; // Hype 目标值
         this.marketCapacity = 100000; // 市场容量
@@ -28,9 +28,9 @@ class AIEmpireGame {
         this.loadHardCap = 1.0; // 负载硬容量阈值
 
         // ========== Hype 系统参数 ==========
-        this.hypeBase = 1.0;
-        this.hypeMinimum = 0.1;
-        this.hypeMaximum = 5.0;
+        this.hypeBase = 10.0;
+        this.hypeMinimum = 1.0;
+        this.hypeMaximum = 100.0;
         this.hypeChangeSpeed = 0.5; // 每秒
         
         this.hypeLowLoadBonus = 0.3; // 低负载奖励
@@ -54,16 +54,6 @@ class AIEmpireGame {
             gpu: { count: 0, baseCost: 500, capacity: 100, costFactor: 1.15, name: 'GPU集群' },
             tpu: { count: 0, baseCost: 50000, capacity: 1000, costFactor: 1.15, name: 'TPU阵列', unlocked: false },
             quantum: { count: 0, baseCost: 10000000, capacity: 10000, costFactor: 1.15, name: '量子芯片', unlocked: false },
-        };
-
-        // ========== 研究系统 ==========
-        this.researches = {
-            marketCoverage: { level: 0, maxLevel: 50, baseCost: 10000, factor: 1.5, effect: 0.05, name: '市场覆盖' },
-            brandBuilding: { level: 0, maxLevel: 40, baseCost: 15000, factor: 1.5, effect: 0.04, name: '品牌建设' },
-            delayOptimization: { level: 0, maxLevel: 25, baseCost: 20000, factor: 1.5, effect: 0.05, name: '延迟优化' },
-            capacityOptimization: { level: 0, maxLevel: 25, baseCost: 15000, factor: 1.5, effect: 0.08, name: '容量优化' },
-            textQuality: { level: 0, maxLevel: 30, baseCost: 25000, factor: 1.5, effect: 0.1, name: '文本API质量' },
-            bugFixing: { level: 0, maxLevel: 20, baseCost: 18000, factor: 1.5, effect: 0.1, name: 'Bug修复' },
         };
 
         // ========== 产品系统 ==========
@@ -154,7 +144,6 @@ class AIEmpireGame {
             revenueMultiplier: this.revenueMultiplier,
             systemCapacity: this.systemCapacity,
             buildings: this.buildings,
-            researches: this.researches,
             products: this.products,
         };
         localStorage.setItem('aiEmpireGameSave', JSON.stringify(gameData));
@@ -174,7 +163,6 @@ class AIEmpireGame {
             this.revenueMultiplier = data.revenueMultiplier;
             this.systemCapacity = data.systemCapacity;
             this.buildings = data.buildings;
-            this.researches = data.researches;
             this.products = data.products;
         }
     }
@@ -218,23 +206,30 @@ class AIEmpireGame {
 
         // 低负载奖励
         const loadRate = this.systemCapacity > 0 ? this.currentLoad / this.systemCapacity : 0;
-        if (loadRate < 0.5) {
+        if (loadRate < 0.5) 
+        {
             factors.lowLoadBonus = this.hypeLowLoadBonus;
         }
 
         // Ping影响（三阶段）
-        if (this.ping <= this.hypePingMinorTolerance) {
+        if (this.ping <= this.hypePingMinorTolerance) 
+        {
             factors.pingImpact = this.hypePingLowBonus * (1 - this.ping / this.hypePingMinorTolerance);
-        } else if (this.ping <= this.hypePingMajorTolerance) {
+        } 
+        else if (this.ping <= this.hypePingMajorTolerance) 
+        {
             const t = (this.ping - this.hypePingMinorTolerance) / (this.hypePingMajorTolerance - this.hypePingMinorTolerance);
             factors.pingImpact = -this.hypePingMinorImpact * t;
-        } else {
+        } 
+        else 
+        {
             factors.pingImpact = -this.hypePingMinorImpact - (this.ping - this.hypePingMajorTolerance) / this.hypePingMajorImpact;
         }
 
         // Bug影响
         const bugThreshold = this.bugSoftCapacity * this.hypeBugBonusThreshold;
-        if (this.bugCount > bugThreshold) {
+        if (this.bugCount > bugThreshold) 
+        {
             const overRatio = (this.bugCount - bugThreshold) / this.bugSoftCapacity;
             factors.bugImpact = -Math.min(overRatio, this.hypeBugMaximumImpact);
         }
@@ -270,10 +265,7 @@ class AIEmpireGame {
         const marketResistance = this.calculateMarketResistance();
         const loadDecay = this.calculateLoadDecay();
 
-        // 应用研究升级
-        let growthRate = this.playersGrowthRate * (1 + this.researches.marketCoverage.level * this.researches.marketCoverage.effect);
-
-        const deltaUsers = growthRate * this.hypeValue * marketResistance * loadDecay;
+        const deltaUsers = this.playersGrowthRate * this.hypeValue * marketResistance * loadDecay;
 
         this.cachedStats.deltaUsersPerSecond = deltaUsers;
         this.cachedStats.marketResistance = marketResistance;
@@ -288,13 +280,10 @@ class AIEmpireGame {
     calculateProfitPerSecond() {
         const deltaUsers = this.calculateDeltaUsersPerSecond();
 
-        // 应用研究升级
-        let revenueMultiplier = this.revenueMultiplier * (1 + this.researches.textQuality.level * this.researches.textQuality.effect);
-
-        const profit = deltaUsers * this.pricePerCopy * revenueMultiplier;
+        const profit = deltaUsers * this.pricePerCopy * this.revenueMultiplier;
 
         this.cachedStats.profitPerSecond = profit;
-        this.cachedStats.arpu = this.pricePerCopy * revenueMultiplier;
+        this.cachedStats.arpu = this.pricePerCopy * this.revenueMultiplier;
 
         return profit;
     }
@@ -317,7 +306,7 @@ class AIEmpireGame {
         }
 
         // 每秒有一定概率修复Bug
-        if (Math.random() < 0.05 * (1 + this.researches.bugFixing.level * 0.1)) {
+        if (Math.random() < 0.05) {
             this.bugCount = Math.max(0, this.bugCount - 1);
         }
 
@@ -421,51 +410,7 @@ class AIEmpireGame {
             totalCapacity += building.count * building.capacity;
         }
 
-        // 应用容量优化研究
-        const capacityBonus = 1 + this.researches.capacityOptimization.level * this.researches.capacityOptimization.effect;
-        this.systemCapacity = totalCapacity * capacityBonus;
-    }
-
-    // ========== 研究系统 ==========
-
-    /**
-     * 计算研究成本
-     */
-    calculateResearchCost(researchKey) {
-        const research = this.researches[researchKey];
-        const cost = research.baseCost * Math.pow(research.factor, research.level);
-        return cost;
-    }
-
-    /**
-     * 升级研究
-     */
-    upgradeResearch(researchKey) {
-        const research = this.researches[researchKey];
-        if (research.level >= research.maxLevel) {
-            this.addLog(`${research.name}已达最高等级`, 'warning');
-            return;
-        }
-
-        const cost = this.calculateResearchCost(researchKey);
-        if (this.money >= cost) {
-            this.money -= cost;
-            research.level++;
-
-            // 应用研究效果
-            if (researchKey === 'brandBuilding') {
-                this.hypeBase *= (1 + research.effect);
-            } else if (researchKey === 'delayOptimization') {
-                // Ping改善通过参数调整
-                this.hypePingMinorTolerance += 5;
-                this.hypePingMajorTolerance += 10;
-            }
-
-            this.updateSystemCapacity();
-            this.addLog(`升级 ${research.name} 到 Lv.${research.level}`, 'success');
-        } else {
-            this.addLog(`资金不足，无法升级 ${research.name}`, 'warning');
-        }
+        this.systemCapacity = totalCapacity;
     }
 
     // ========== 产品系统 ==========
@@ -506,7 +451,6 @@ class AIEmpireGame {
     initUI() {
         this.setupNavigation();
         this.renderBuildings();
-        this.renderResearch();
         this.renderProducts();
     }
 
@@ -557,32 +501,6 @@ class AIEmpireGame {
                 </button>
             `;
             container.appendChild(card);
-        }
-    }
-
-    renderResearch() {
-        const container = document.getElementById('researchContainer');
-        container.innerHTML = '';
-
-        for (const key in this.researches) {
-            const research = this.researches[key];
-            const cost = this.calculateResearchCost(key);
-            const canUpgrade = research.level < research.maxLevel && this.money >= cost;
-
-            const item = document.createElement('div');
-            item.className = 'research-item';
-            item.innerHTML = `
-                <div class="research-name">${research.name}</div>
-                <div class="research-level">Lv.${research.level}/${research.maxLevel}</div>
-                <div style="font-size: 11px; color: #888; margin-bottom: 8px;">
-                    成本: $${this.formatNumber(cost)}
-                </div>
-                <button class="research-btn" onclick="game.upgradeResearch('${key}')" 
-                    ${!canUpgrade ? 'disabled' : ''}>
-                    升级
-                </button>
-            `;
-            container.appendChild(item);
         }
     }
 

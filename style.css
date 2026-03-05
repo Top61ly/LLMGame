@@ -443,56 +443,6 @@ body {
     cursor: not-allowed;
 }
 
-/* 研究树 */
-.research-tree {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 12px;
-}
-
-.research-item {
-    background: rgba(0, 212, 255, 0.05);
-    border: 1px solid #00d4ff;
-    border-radius: 8px;
-    padding: 12px;
-    text-align: center;
-}
-
-.research-name {
-    font-size: 12px;
-    font-weight: bold;
-    color: #00ff88;
-    margin-bottom: 6px;
-}
-
-.research-level {
-    font-size: 11px;
-    color: #888;
-    margin-bottom: 8px;
-}
-
-.research-btn {
-    width: 100%;
-    padding: 6px;
-    background: rgba(0, 212, 255, 0.2);
-    border: 1px solid #00d4ff;
-    color: #00d4ff;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 11px;
-    transition: all 0.3s ease;
-}
-
-.research-btn:hover:not(:disabled) {
-    background: #00d4ff;
-    color: #0f0f1e;
-}
-
-.research-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
 /* 右侧边栏 */
 .sidebar-right {
     width: 200px;
