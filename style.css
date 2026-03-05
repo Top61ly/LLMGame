@@ -265,6 +265,38 @@ body {
     min-width: fit-content;
 }
 
+.header-news {
+    flex: 1;
+    min-width: 100px;
+    max-width: 500px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.news-ticker-text {
+    font-size: 14px;
+    color: #00d4ff;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    animation: fadeNews 0.5s ease-in-out;
+}
+
+@keyframes fadeNews {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 .header-right {
     display: flex;
     gap: 20px;

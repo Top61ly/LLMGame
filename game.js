@@ -85,6 +85,13 @@ class AIEmpireGame {
             { type: 'policy', title: '美国发布《AI 行政命令》', desc: '要求政府部门评估大模型风险', impact: 'ping', value: 5, emoji: '📋', time: '1d ago' },
             { type: 'mystery', title: 'Google 的 Gemini 通过改进版图灵测试', desc: '多项指标首次超过人类水平', impact: 'random', value: 2, emoji: '🤖', time: '1d ago' },
             { type: 'funding', title: 'AI 芯片初创公司融资 5 亿美元', desc: '开发 AI 特化的处理器架构', impact: 'capacity', value: 3, emoji: '📈', time: '2d ago' },
+            { type: 'breakthrough', title: 'Anthropic 发布 Claude 3 Opus', desc: '推理能力提升 40%，创意写作超越 GPT-4', impact: 'hype', value: 4, emoji: '✨', time: '3d ago' },
+            { type: 'policy', title: '中国发布《生成式AI 规范》', desc: '对内容生成功能进行新的安全要求', impact: 'ping', value: 6, emoji: '📋', time: '3d ago' },
+            { type: 'funding', title: 'Stability AI 融资 4 亿美元', desc: '用于开源模型和商业应用完善', impact: 'capacity', value: 4, emoji: '📈', time: '4d ago' },
+            { type: 'breakthrough', title: '多公司宣布 AI 联盟合作', desc: '共同研发安全标准和最佳实践', impact: 'hype', value: 2, emoji: '🤝', time: '5d ago' },
+            { type: 'mystery', title: '某公司推出自学习模型系统', desc: '声称可自我改进，引发业界讨论', impact: 'random', value: 4, emoji: '🔮', time: '5d ago' },
+            { type: 'policy', title: '加拿大计划制定 AI 伦理标准', desc: '包括透明度和问责机制要求', impact: 'ping', value: 3, emoji: '📋', time: '6d ago' },
+            { type: 'breakthrough', title: '视觉语言模型新突破', desc: '识别准确率创新高，距真实视觉理解更进一步', impact: 'hype', value: 3, emoji: '👁️', time: '1w ago' },
         ];
         this.currentNewsIndex = 0;
         this.newsAutoplayTimer = null;
@@ -158,13 +165,6 @@ class AIEmpireGame {
         toggleBtn.addEventListener('click', () => {
             const panel = document.querySelector('.bottom-panel');
             panel.classList.toggle('collapsed');
-        });
-
-        // 新闻播放控制
-        const pauseNewsBtn = document.getElementById('pauseNewsBtn');
-        pauseNewsBtn.addEventListener('click', () => {
-            this.newsAutoPaused = !this.newsAutoPaused;
-            pauseNewsBtn.textContent = this.newsAutoPaused ? '▶ 继续' : '⏸ 暂停';
         });
 
         // 初始化新闻显示
@@ -825,39 +825,11 @@ class AIEmpireGame {
         }
 
         const news = this.aiNews[this.currentNewsIndex];
-        const newsContainer = document.getElementById('news-content');
+        const headerNewsText = document.getElementById('headerNewsText');
         
-        if (newsContainer) {
-            // 创建新的新闻项并添加到容器
-            const newsItem = document.createElement('div');
-            newsItem.className = 'news-item';
-            newsItem.innerHTML = `
-                <div class="news-header">
-                    <span class="news-emoji">${news.emoji}</span>
-                    <h4 class="news-title">${news.title}</h4>
-                </div>
-                <p class="news-desc">${news.desc}</p>
-                <div class="news-footer">
-                    <span class="news-time">${news.time}</span>
-                </div>
-            `;
-            
-            newsContainer.appendChild(newsItem);
-            
-            // 自动滚动到底部
-            newsContainer.scrollTop = newsContainer.scrollHeight;
-            
-            // 限制最多显示15条新闻，超过则删除最早的
-            const items = newsContainer.querySelectorAll('.news-item');
-            if (items.length > 15) {
-                items[0].remove();
-            }
-        }
-
-        // 更新计数器 - 显示总共显示的新闻条数
-        const counterEl = document.getElementById('newsCounter');
-        if (counterEl) {
-            counterEl.textContent = `${this.currentNewsIndex + 1}`;
+        if (headerNewsText) {
+            // 显示新闻标题到头部
+            headerNewsText.textContent = `📰 ${news.title}`;
         }
     }
 
@@ -869,11 +841,11 @@ class AIEmpireGame {
 
         this.newsAutoplayTimer = setInterval(() => {
             if (!this.newsAutoPaused) {
-                // 随机选择一条新闻显示
-                this.currentNewsIndex = Math.floor(Math.random() * this.aiNews.length);
+                // 顺序循环显示新闻
+                this.currentNewsIndex = (this.currentNewsIndex + 1) % this.aiNews.length;
                 this.showNews(this.currentNewsIndex);
             }
-        }, 5000); // 每5秒自动添加一条新闻
+        }, 6000); // 每6秒自动切换一条新闻
     }
 
     addBottomEventLog(message, type = 'info') {

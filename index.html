@@ -37,6 +37,9 @@
         <!-- 顶部Bar -->
         <div class="header">
             <div class="title">🏢 AI Empire Inc. <span id="modelNameDisplay" style="color: #00ff88; font-size: 0.9em;"></span></div>
+            <div class="header-news" id="headerNews">
+                <span class="news-ticker-text" id="headerNewsText">欢迎来到 AI 帝国...</span>
+            </div>
             <div class="header-right">
                 <div class="game-time-display">
                     <span class="time-icon">🕐</span>
@@ -195,7 +198,6 @@
             <!-- 标签切换 -->
             <div class="bottom-tabs">
                 <button class="bottom-tab-btn active" data-panel="logs">📋 日志</button>
-                <button class="bottom-tab-btn" data-panel="news">🌍 新闻</button>
                 <button class="bottom-tab-btn" data-panel="stats">📊 统计</button>
                 <button class="bottom-tab-btn" data-panel="details">🔍 详情</button>
                 <button class="bottom-toggle-btn" id="toggleBottomPanel" title="折叠/展开">–</button>
@@ -209,19 +211,6 @@
                         <div class="log-item info">
                             <span class="log-time">[0:00]</span>
                             <span class="log-message">游戏已启动</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 🌍 热点新闻 -->
-                <div class="bottom-panel-content" id="panel-news">
-                    <div class="news-ticker">
-                        <div class="news-container" id="news-content">
-                            <!-- 动态生成的新闻项 -->
-                        </div>
-                        <div class="news-controls">
-                            <button id="pauseNewsBtn" class="news-btn">⏸ 暂停</button>
-                            <span class="news-counter" id="newsCounter">0</span>
                         </div>
                     </div>
                 </div>
