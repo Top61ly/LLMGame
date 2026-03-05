@@ -52,10 +52,10 @@ class AIEmpireGame {
 
         // ========== 建筑系统 ==========
         this.buildings = {
-            cpu: { count: 0, baseCost: 5000, capacity: 1000, costFactor: 1.15, name: 'CPU集群' },
-            gpu: { count: 0, baseCost: 50000, capacity: 20000, costFactor: 1.15, name: 'GPU集群' },
-            tpu: { count: 0, baseCost: 500000, capacity: 40000, costFactor: 1.15, name: 'TPU阵列', unlocked: false },
-            quantum: { count: 0, baseCost: 5000000, capacity: 800000, costFactor: 1.15, name: '量子芯片', unlocked: false },
+            cpu: { count: 0, baseCost: 5000, capacity: 500, costFactor: 1.15, name: 'CPU集群' },
+            gpu: { count: 0, baseCost: 50000, capacity: 1500, costFactor: 1.15, name: 'GPU集群' },
+            tpu: { count: 0, baseCost: 500000, capacity: 4500, costFactor: 1.15, name: 'TPU阵列', unlocked: false },
+            quantum: { count: 0, baseCost: 5000000, capacity: 7000, costFactor: 1.15, name: '量子芯片', unlocked: false },
         };
 
         // ========== 产品系统 ==========
