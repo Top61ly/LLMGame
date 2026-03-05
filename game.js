@@ -6,7 +6,7 @@
 class AIEmpireGame {
     constructor() {
         // ========== 游戏状态 ==========
-        this.money = 1000; // 初始资金
+        this.money = 100000; // 初始资金
         this.totalUsers = 0; // 总用户数
         this.gameTime = 0; // 游戏时间（秒）
         this.deltaTime = 0; // 帧间隔
