@@ -17,7 +17,6 @@ class AIEmpireGame {
         this.hypeValue = 1.0; // Hype 口碑值
         this.hypeTarget = 1.0; // Hype 目标值
         this.marketCapacity = 100000; // 市场容量
-        this.doubleChance = 0.1; // 双倍概率
 
         this.pricePerCopy = 0.1; // 每用户单价
         this.revenueMultiplier = 1.0; // 收入乘数
@@ -151,7 +150,6 @@ class AIEmpireGame {
             playersGrowthRate: this.playersGrowthRate,
             hypeValue: this.hypeValue,
             marketCapacity: this.marketCapacity,
-            doubleChance: this.doubleChance,
             pricePerCopy: this.pricePerCopy,
             revenueMultiplier: this.revenueMultiplier,
             systemCapacity: this.systemCapacity,
@@ -172,7 +170,6 @@ class AIEmpireGame {
             this.playersGrowthRate = data.playersGrowthRate;
             this.hypeValue = data.hypeValue;
             this.marketCapacity = data.marketCapacity;
-            this.doubleChance = data.doubleChance;
             this.pricePerCopy = data.pricePerCopy;
             this.revenueMultiplier = data.revenueMultiplier;
             this.systemCapacity = data.systemCapacity;
@@ -290,15 +287,14 @@ class AIEmpireGame {
      */
     calculateProfitPerSecond() {
         const deltaUsers = this.calculateDeltaUsersPerSecond();
-        const randomDouble = Math.random() < this.doubleChance ? 2 : 1;
 
         // 应用研究升级
         let revenueMultiplier = this.revenueMultiplier * (1 + this.researches.textQuality.level * this.researches.textQuality.effect);
 
-        const profit = deltaUsers * this.pricePerCopy * revenueMultiplier * randomDouble;
+        const profit = deltaUsers * this.pricePerCopy * revenueMultiplier;
 
         this.cachedStats.profitPerSecond = profit;
-        this.cachedStats.arpu = this.pricePerCopy * revenueMultiplier * randomDouble;
+        this.cachedStats.arpu = this.pricePerCopy * revenueMultiplier;
 
         return profit;
     }
