@@ -13,10 +13,10 @@ class AIEmpireGame {
         this.lastFrameTime = Date.now();
 
         // ========== 核心参数 ==========
-        this.playersGrowthRate = 1; // 用户增长率（初始2%）
+        this.playersGrowthRate = 10; // 用户增长率（初始2%）
         this.hypeValue = 1.0; // Hype 口碑值
         this.hypeTarget = 1.0; // Hype 目标值
-        this.marketCapacity = 100000; // 市场容量
+        this.marketCapacity = 10000; // 市场容量
 
         this.pricePerCopy = 0.1; // 每用户单价
         this.revenueMultiplier = 1.0; // 收入乘数
@@ -28,9 +28,9 @@ class AIEmpireGame {
         this.loadHardCap = 1.0; // 负载硬容量阈值
 
         // ========== Hype 系统参数 ==========
-        this.hypeBase = 10.0;
-        this.hypeMinimum = 1.0;
-        this.hypeMaximum = 100.0;
+        this.hypeBase = 1.0;
+        this.hypeMinimum = 0.1;
+        this.hypeMaximum = 5.0;
         this.hypeChangeSpeed = 0.5; // 每秒
         
         this.hypeLowLoadBonus = 0.3; // 低负载奖励
@@ -292,8 +292,8 @@ class AIEmpireGame {
      * 更新系统状态
      */
     updateSystemState() {
-        // 更新负载（基于用户数和活跃度）
-        this.currentLoad = Math.max(0, this.calculateDeltaUsersPerSecond());
+        // 更新负载（基于当前用户总数）
+        this.currentLoad = this.totalUsers;
 
         // 动态更新Ping（基于负载）
         const loadRate = this.systemCapacity > 0 ? this.currentLoad / this.systemCapacity : 0;
