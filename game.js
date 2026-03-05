@@ -11,6 +11,7 @@ class AIEmpireGame {
         this.gameTime = 0; // 游戏时间（秒）
         this.deltaTime = 0; // 帧间隔
         this.lastFrameTime = Date.now();
+        this.modelName = ''; // 大模型名称
 
         // ========== 核心参数 ==========
         this.playersGrowthRate = 100; // 用户增长率（初始2%）
@@ -100,7 +101,7 @@ class AIEmpireGame {
             
             // 开始游戏按钮
             startBtn.addEventListener('click', () => {
-                this.startNewGame();
+                this.showNamingPage();
             });
         }
 
@@ -108,6 +109,48 @@ class AIEmpireGame {
         newGameBtn.addEventListener('click', () => {
             this.resetGame();
         });
+
+        // 命名页面事件
+        const publishBtn = document.getElementById('publishBtn');
+        const modelNameInput = document.getElementById('modelNameInput');
+        
+        publishBtn.addEventListener('click', () => {
+            this.publishModel();
+        });
+        
+        modelNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.publishModel();
+            }
+        });
+    }
+
+    showNamingPage() {
+        // 隐藏欢迎页，显示命名页
+        document.getElementById('welcomePage').classList.remove('active');
+        document.getElementById('namingPage').classList.add('active');
+        
+        // 聚焦输入框
+        setTimeout(() => {
+            document.getElementById('modelNameInput').focus();
+        }, 500);
+    }
+
+    publishModel() {
+        const modelNameInput = document.getElementById('modelNameInput');
+        const modelName = modelNameInput.value.trim();
+        
+        if (!modelName || modelName === '') {
+            modelNameInput.style.borderColor = '#ff4444';
+            modelNameInput.placeholder = '请输入有效的模型名称！';
+            setTimeout(() => {
+                modelNameInput.style.borderColor = '#00d4ff';
+            }, 1000);
+            return;
+        }
+        
+        this.modelName = modelName;
+        this.startNewGame();
     }
 
     startNewGame() {
@@ -115,7 +158,7 @@ class AIEmpireGame {
         this.saveGame();
         
         // 页面切换
-        document.getElementById('welcomePage').classList.remove('active');
+        document.getElementById('namingPage').classList.remove('active');
         document.getElementById('gamePage').classList.add('active');
         
         // 初始化UI和游戏循环
@@ -135,6 +178,7 @@ class AIEmpireGame {
 
     saveGame() {
         const gameData = {
+            modelName: this.modelName,
             money: this.money,
             totalUsers: this.totalUsers,
             gameTime: this.gameTime,
@@ -154,6 +198,7 @@ class AIEmpireGame {
         const savedGame = localStorage.getItem('aiEmpireGameSave');
         if (savedGame) {
             const data = JSON.parse(savedGame);
+            this.modelName = data.modelName || 'AI模型';
             this.money = data.money;
             this.totalUsers = data.totalUsers;
             this.gameTime = data.gameTime;
@@ -456,6 +501,11 @@ class AIEmpireGame {
     // ========== UI系统 ==========
 
     initUI() {
+        // 初始化模型名称显示
+        if (this.modelName) {
+            document.getElementById('modelNameDisplay').textContent = `- ${this.modelName}`;
+        }
+        
         this.setupNavigation();
         this.renderBuildings();
         this.renderProducts();
@@ -539,6 +589,11 @@ class AIEmpireGame {
     }
 
     updateUI() {
+        // 更新模型名称显示
+        if (this.modelName) {
+            document.getElementById('modelNameDisplay').textContent = `- ${this.modelName}`;
+        }
+        
         // 更新顶部统计
         document.getElementById('money').textContent = `$${this.formatNumber(this.money)}`;
         document.getElementById('profitPerSecond').textContent = `$${this.formatNumber(this.cachedStats.profitPerSecond)}/s`;

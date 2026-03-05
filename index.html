@@ -19,12 +19,24 @@
         </div>
     </div>
 
+    <!-- 命名页面 -->
+    <div id="namingPage" class="naming-page">
+        <div class="naming-container">
+            <div class="naming-content">
+                <h2 class="naming-title">🤖 为你的第一个大模型起一个名字</h2>
+                <input type="text" id="modelNameInput" class="model-input" placeholder="例如：GPT-Empire" maxlength="30" />
+                <button class="publish-btn" id="publishBtn">🚀 发布模型</button>
+                <p class="naming-hint">这个名字将伴随你的AI帝国一路前行</p>
+            </div>
+        </div>
+    </div>
+
     <!-- 游戏主界面 -->
     <div id="gamePage" class="game-page">
         <div class="container">
         <!-- 顶部Bar -->
         <div class="header">
-            <div class="title">🏢 AI Empire Inc.</div>
+            <div class="title">🏢 AI Empire Inc. <span id="modelNameDisplay" style="color: #00ff88; font-size: 0.9em;"></span></div>
             <div class="header-buttons">
                 <button id="newGameBtn" class="header-btn" title="开始新游戏">🔄 新游戏</button>
             </div>
