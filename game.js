@@ -6,23 +6,23 @@
 class AIEmpireGame {
     constructor() {
         // ========== 游戏状态 ==========
-        this.money = 100000; // 初始资金
+        this.money = 10000; // 初始资金
         this.totalUsers = 0; // 总用户数
         this.gameTime = 0; // 游戏时间（秒）
         this.deltaTime = 0; // 帧间隔
         this.lastFrameTime = Date.now();
 
         // ========== 核心参数 ==========
-        this.playersGrowthRate = 10; // 用户增长率（初始2%）
+        this.playersGrowthRate = 100; // 用户增长率（初始2%）
         this.hypeValue = 1.0; // Hype 口碑值
         this.hypeTarget = 1.0; // Hype 目标值
-        this.marketCapacity = 10000; // 市场容量
+        this.marketCapacity = 100000; // 市场容量
 
-        this.pricePerCopy = 0.1; // 每用户单价
+        this.pricePerCopy = 100.0; // 每用户单价
         this.revenueMultiplier = 1.0; // 收入乘数
 
         // ========== 系统容量 ==========
-        this.initSystemCapacity = 2000; // 初始系统容量（req/s）
+        this.initSystemCapacity = 1000; // 初始系统容量（req/s）
         this.systemCapacity = this.initSystemCapacity; // 系统容量（req/s）
         this.currentLoad = 0; // 当前负载
         this.loadSoftCap = 0.7; // 负载软容量阈值
@@ -51,10 +51,10 @@ class AIEmpireGame {
 
         // ========== 建筑系统 ==========
         this.buildings = {
-            cpu: { count: 0, baseCost: 50, capacity: 10, costFactor: 1.15, name: 'CPU集群' },
-            gpu: { count: 0, baseCost: 500, capacity: 100, costFactor: 1.15, name: 'GPU集群' },
-            tpu: { count: 0, baseCost: 50000, capacity: 1000, costFactor: 1.15, name: 'TPU阵列', unlocked: false },
-            quantum: { count: 0, baseCost: 10000000, capacity: 10000, costFactor: 1.15, name: '量子芯片', unlocked: false },
+            cpu: { count: 0, baseCost: 5000, capacity: 1000, costFactor: 1.15, name: 'CPU集群' },
+            gpu: { count: 0, baseCost: 50000, capacity: 20000, costFactor: 1.15, name: 'GPU集群' },
+            tpu: { count: 0, baseCost: 500000, capacity: 40000, costFactor: 1.15, name: 'TPU阵列', unlocked: false },
+            quantum: { count: 0, baseCost: 5000000, capacity: 800000, costFactor: 1.15, name: '量子芯片', unlocked: false },
         };
 
         // ========== 产品系统 ==========
@@ -266,12 +266,18 @@ class AIEmpireGame {
         const marketResistance = this.calculateMarketResistance();
         const loadDecay = this.calculateLoadDecay();
 
-        const deltaUsers = this.playersGrowthRate * this.hypeValue * marketResistance * loadDecay;
+        let deltaUsers = this.playersGrowthRate * this.hypeValue * marketResistance * loadDecay;
+
+        // 如果增长后超过系统容量，限制为差值
+        const remainingCapacity = this.systemCapacity - this.currentLoad;
+        if (this.currentLoad + deltaUsers > this.systemCapacity) {
+            deltaUsers = Math.max(0, remainingCapacity);
+        }
 
         this.cachedStats.deltaUsersPerSecond = deltaUsers;
         this.cachedStats.marketResistance = marketResistance;
         this.cachedStats.loadDecay = loadDecay;
-        
+
         return deltaUsers;
     }
 
