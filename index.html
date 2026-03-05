@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Empire - AI大模型公司模拟经营</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 欢迎页面 -->
+    <div id="welcomePage" class="welcome-page active">
+        <div class="welcome-container">
+            <div class="welcome-content">
+                <h1 class="welcome-title">🏢 AI Empire</h1>
+                <p class="welcome-subtitle">开始创建你的AI公司</p>
+                <p class="welcome-subtitle">并发布第一个大模型吧</p>
+                <button class="welcome-btn" id="startBtn">开始游戏</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏主界面 -->
+    <div id="gamePage" class="game-page">
+        <div class="container">
+        <!-- 顶部Bar -->
+        <div class="header">
+            <div class="title">🏢 AI Empire Inc.</div>
+            <div class="header-buttons">
+                <button id="newGameBtn" class="header-btn" title="开始新游戏">🔄 新游戏</button>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">💰 资金</span>
+                    <span class="stat-value" id="money">$0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">⚡ 每秒盈利</span>
+                    <span class="stat-value" id="profitPerSecond">$0/s</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">👥 总用户</span>
+                    <span class="stat-value" id="totalUsers">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">😊 Hype值</span>
+                    <span class="stat-value" id="hypeValue">1.0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主容器 -->
+        <div class="main">
+            <!-- 左栏 -->
+            <div class="sidebar">
+                <nav class="nav">
+                    <button class="nav-btn active" data-page="overview">📊 总览</button>
+                    <button class="nav-btn" data-page="buildings">⚙️ 建筑</button>
+                    <button class="nav-btn" data-page="research">🔬 研究</button>
+                    <button class="nav-btn" data-page="products">🤖 产品</button>
+                </nav>
+
+                <div class="sidebar-section">
+                    <h3 class="section-title">💰 资金</h3>
+                    <div class="stat-large" id="sidebarMoney">$0</div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="section-title">👥 总用户</h3>
+                    <div class="stat-large" id="sidebarUsers">0</div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="section-title">📈 盈利/s</h3>
+                    <div class="stat-large" id="sidebarProfit">$0/s</div>
+                </div>
+            </div>
+
+            <!-- 中心内容区 -->
+            <div class="content">
+                <!-- 📊 总览页面 -->
+                <div class="page active" id="page-overview">
+                    <h2>📊 系统概览</h2>
+                    <div class="dashboard">
+                        <div class="card">
+                            <div class="card-title">💰 每秒盈利</div>
+                            <div class="card-value" id="dashProfit">$0/s</div>
+                            <div class="card-formula">= DeltaUsers/s × Price × RevMult × Double</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">👥 每秒新增用户</div>
+                            <div class="card-value" id="dashDeltaUsers">0/s</div>
+                            <div class="card-formula">= GrowthRate × Hype × Resistance × LoadDecay</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">😊 Hype 口碑值</div>
+                            <div class="card-value" id="dashHype">1.0</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="hypeBar" style="width: 20%"></div>
+                            </div>
+                            <div class="card-info" id="hypeBreakdown">
+                                基础: 1.0 | 低负载: +0.0 | Ping: 0.0 | Bug: 0.0
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">📊 系统容量</div>
+                            <div class="card-value" id="dashCapacity">0 req/s</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="loadBar"></div>
+                            </div>
+                            <div class="card-info">
+                                负载: <span id="loadPercentage">0%</span> | 
+                                衰减: <span id="loadDecay">100%</span>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">🌍 市场饱和</div>
+                            <div class="card-value" id="dashResistance">100%</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="saturationBar"></div>
+                            </div>
+                            <div class="card-info">
+                                用户/容量: <span id="marketRatio">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">💵 每用户收入</div>
+                            <div class="card-value" id="dashArpu">$0</div>
+                            <div class="card-formula">= Price × RevMult × Double</div>
+                        </div>
+                    </div>
+
+                    <!-- 事件日志 -->
+                    <h3>📋 系统日志</h3>
+                    <div class="log-box" id="eventLog">
+                        <div class="log-entry">游戏已启动</div>
+                    </div>
+                </div>
+
+                <!-- ⚙️ 建筑页面 -->
+                <div class="page" id="page-buildings">
+                    <h2>⚙️ 算力设施</h2>
+                    <div class="buildings-grid" id="buildingsContainer">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 🔬 研究页面 -->
+                <div class="page" id="page-research">
+                    <h2>🔬 研究升级</h2>
+                    <div class="research-tree" id="researchContainer">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 🤖 产品页面 -->
+                <div class="page" id="page-products">
+                    <h2>🤖 产品系统</h2>
+                    <div class="products-grid" id="productsContainer">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右栏 信息板 -->
+            <div class="sidebar-right">
+                <div class="info-panel">
+                    <h3>⏱️ 游戏时间</h3>
+                    <div class="info-value" id="gameTime">0:00:00</div>
+                </div>
+
+                <div class="info-panel">
+                    <h3>⚠️ 系统状态</h3>
+                    <div id="systemStatus">
+                        <div class="status-item">
+                            <span>Ping:</span>
+                            <span id="pingValue">50ms</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Bug:</span>
+                            <span id="bugValue">0</span>
+                        </div>
+                        <div class="status-item">
+                            <span>负载率:</span>
+                            <span id="loadRateValue">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-panel">
+                    <h3>📈 目标进度</h3>
+                    <div class="goal-item">
+                        <span style="font-size: 12px; color: #888;">Profit/s 目标</span>
+                        <div class="small-progress">
+                            <div class="small-progress-fill" id="profitGoal"></div>
+                        </div>
+                        <span class="progress-text" id="profitGoalText">$0 / $1K</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
