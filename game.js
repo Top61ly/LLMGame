@@ -593,12 +593,7 @@ class AIEmpireGame {
         if (this.modelName) {
             document.getElementById('modelNameDisplay').textContent = `- ${this.modelName}`;
         }
-        
-        // 更新顶部统计
-        document.getElementById('money').textContent = `$${this.formatNumber(this.money)}`;
-        document.getElementById('profitPerSecond').textContent = `$${this.formatNumber(this.cachedStats.profitPerSecond)}/s`;
-        document.getElementById('totalUsers').textContent = this.formatNumber(this.totalUsers);
-        document.getElementById('hypeValue').textContent = this.hypeValue.toFixed(2);
+
 
         // 更新左侧栏
         document.getElementById('sidebarMoney').textContent = `$${this.formatNumber(this.money)}`;
