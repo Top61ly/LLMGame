@@ -587,6 +587,27 @@ class AIEmpireGame {
         const progress = Math.min(this.cachedStats.profitPerSecond / targetProfit * 100, 100);
         document.getElementById('profitGoal').style.width = `${progress}%`;
         document.getElementById('profitGoalText').textContent = `$${this.formatNumber(this.cachedStats.profitPerSecond)}/s / $${this.formatNumber(targetProfit)}`;
+
+        // 更新建筑数量显示
+        for (const key in this.buildings) {
+            const buildingEl = document.getElementById(`building-${key}`);
+            if (buildingEl) {
+                const countEl = buildingEl.querySelector('.building-count');
+                if (countEl) {
+                    countEl.textContent = `已购买: ${this.buildings[key].count}`;
+                }
+                const costEl = buildingEl.querySelector('[data-label="下一个成本"]');
+                if (costEl) {
+                    const cost = this.calculateBuildingCost(key);
+                    costEl.textContent = `下一个成本: $${this.formatNumber(cost)}`;
+                }
+                const btnEl = buildingEl.querySelector('.build-btn');
+                if (btnEl) {
+                    const cost = this.calculateBuildingCost(key);
+                    btnEl.disabled = this.money < cost;
+                }
+            }
+        }
     }
 
     addLog(message, type = 'info') {
