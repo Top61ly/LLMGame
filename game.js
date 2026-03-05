@@ -22,7 +22,8 @@ class AIEmpireGame {
         this.revenueMultiplier = 1.0; // 收入乘数
 
         // ========== 系统容量 ==========
-        this.systemCapacity = 100; // 系统容量（req/s）
+        this.initSystemCapacity = 2000; // 初始系统容量（req/s）
+        this.systemCapacity = this.initSystemCapacity; // 系统容量（req/s）
         this.currentLoad = 0; // 当前负载
         this.loadSoftCap = 0.7; // 负载软容量阈值
         this.loadHardCap = 1.0; // 负载硬容量阈值
@@ -403,7 +404,7 @@ class AIEmpireGame {
      * 更新系统容量
      */
     updateSystemCapacity() {
-        let totalCapacity = 0;
+        let totalCapacity = this.initSystemCapacity;
 
         for (const key in this.buildings) {
             const building = this.buildings[key];
@@ -488,10 +489,11 @@ class AIEmpireGame {
             const cost = this.calculateBuildingCost(key);
             const card = document.createElement('div');
             card.className = 'building-card';
+            card.id = `building-${key}`;
             card.innerHTML = `
                 <div class="building-name">${building.name}</div>
                 <div class="building-stats">
-                    <div data-label="已购买">已购买: ${building.count}</div>
+                    <div class="building-count" data-label="已购买">已购买: ${building.count}</div>
                     <div data-label="容量">容量: ${building.capacity} req/s</div>
                     <div data-label="下一个成本">下一个成本: $${this.formatNumber(cost)}</div>
                     <div data-label="预期收益">预期收益: +$${this.formatNumber(cost / 250)}/s</div>
