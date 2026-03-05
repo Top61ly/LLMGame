@@ -519,7 +519,6 @@ class AIEmpireGame {
                 this.buildings[buildingType].count++;
                 this.updateSystemCapacity();
                 const message = `购买 ${this.buildings[buildingType].name} ×1，容量已更新`;
-                this.addLog(message, 'success');
                 this.addBottomEventLog(message, 'success');
             } else {
                 break;
@@ -550,14 +549,12 @@ class AIEmpireGame {
         const product = this.products[productKey];
         if (!product.unlocked) {
             const message = `${product.name} 未解锁`;
-            this.addLog(message, 'warning');
             this.addBottomEventLog(message, 'warning');
             return;
         }
 
         if (product.developed) {
             const message = `${product.name} 已发布`;
-            this.addLog(message, 'warning');
             this.addBottomEventLog(message, 'warning');
             return;
         }
@@ -573,11 +570,9 @@ class AIEmpireGame {
             this.revenueMultiplier *= product.effect;
 
             const message = `发布 ${product.name}！市场容量 +50K，收入乘数 ×${product.effect}`;
-            this.addLog(message, 'success');
             this.addBottomEventLog(message, 'success');
         } else {
             const message = `资金不足，无法开发 ${product.name}`;
-            this.addLog(message, 'warning');
             this.addBottomEventLog(message, 'warning');
         }
     }
