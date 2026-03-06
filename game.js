@@ -458,9 +458,10 @@ class AIEmpireGame {
         const profit = this.calculateProfitPerSecond() * this.deltaTime;
         this.money += profit;
 
-        // 更新用户数
+        // 更新用户数（向上取整，不超过系统容量）
         const deltaUsers = this.calculateDeltaUsersPerSecond() * this.deltaTime;
-        this.totalUsers += deltaUsers;
+        const newUsers = Math.ceil(this.totalUsers + deltaUsers);
+        this.totalUsers = Math.min(newUsers, this.systemCapacity);
 
         // 更新游戏时间
         this.gameTime += this.deltaTime;
@@ -714,7 +715,7 @@ class AIEmpireGame {
 
         // 更新核心数据面板
         document.getElementById('rightMoney').textContent = `$${this.formatNumber(this.money)}`;
-        document.getElementById('rightUsers').textContent = `${this.formatNumber(this.totalUsers)}`;
+        document.getElementById('rightUsers').textContent = `${this.formatNumber(Math.floor(this.totalUsers))}`;
         document.getElementById('rightGrowth').textContent = `+${this.formatNumber(this.cachedStats.deltaUsersPerSecond)}/秒`;
         
         // 计算ARPU (每用户收入 = Price × RevMult)
@@ -724,7 +725,7 @@ class AIEmpireGame {
         document.getElementById('rightProfit').textContent = `+$${this.formatNumber(this.cachedStats.profitPerSecond)}/秒`;
         
         // 更新系统容量
-        document.getElementById('rightCapacity').textContent = `${this.formatNumber(this.totalUsers)} / ${this.formatNumber(this.systemCapacity)}`;
+        document.getElementById('rightCapacity').textContent = `${this.formatNumber(Math.floor(this.totalUsers))} / ${this.formatNumber(this.systemCapacity)}`;
         const capacityPercent = (this.totalUsers / this.systemCapacity * 100).toFixed(1);
         document.getElementById('rightCapacityBar').style.width = `${Math.min(capacityPercent, 100)}%`;
         document.getElementById('rightCapacityPercent').textContent = `${capacityPercent}%`;
@@ -792,7 +793,7 @@ class AIEmpireGame {
         if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
         if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
         if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-        return num.toFixed(2);
+        return Math.floor(num).toString(); // 1000以下显示整数
     }
 
     formatTime(seconds) {
