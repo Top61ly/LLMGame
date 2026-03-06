@@ -729,20 +729,7 @@ class AIEmpireGame {
         document.getElementById('rightCapacityBar').style.width = `${Math.min(capacityPercent, 100)}%`;
         document.getElementById('rightCapacityPercent').textContent = `${capacityPercent}%`;
 
-        // 更新系统状态（带颜色）
-        const loadRatePercent = (this.cachedStats.loadRate * 100).toFixed(1);
-        const loadRateEl = document.getElementById('loadRateValue');
-        loadRateEl.textContent = `${loadRatePercent}%`;
-        if (this.cachedStats.loadRate > 0.9) {
-            loadRateEl.style.color = '#ff4444'; // 红色：危险
-        } else if (this.cachedStats.loadRate > 0.7) {
-            loadRateEl.style.color = '#ffa500'; // 橙色：警告
-        } else if (this.cachedStats.loadRate > 0.5) {
-            loadRateEl.style.color = '#ffff00'; // 黄色：正常
-        } else {
-            loadRateEl.style.color = '#00ff88'; // 绿色：健康
-        }
-
+        // 更新Ping（带颜色）
         const pingEl = document.getElementById('pingValue');
         pingEl.textContent = `${this.ping.toFixed(0)}ms`;
         if (this.ping > 150) {
@@ -753,9 +740,10 @@ class AIEmpireGame {
             pingEl.style.color = '#00ff88'; // 绿色
         }
 
+        // 更新Bug数（带颜色）
         const bugEl = document.getElementById('bugValue');
-        bugEl.textContent = `${this.bugCount} 个`;
-        if (this.bugCount >= this.bugThreshold) {
+        bugEl.textContent = `${this.bugCount}`;
+        if (this.bugCount >= this.bugSoftCapacity) {
             bugEl.style.color = '#ff4444'; // 红色
         } else {
             bugEl.style.color = '#00ff88'; // 绿色
