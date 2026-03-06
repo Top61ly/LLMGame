@@ -17,7 +17,7 @@ class AIEmpireGame {
         this.playersGrowthRate = 100; // 用户增长率（初始2%）
         this.hypeValue = 1.0; // Hype 口碑值
         this.hypeTarget = 1.0; // Hype 目标值
-        this.marketCapacity = 100000; // 市场容量
+        this.marketCapacity = 10000; // 市场容量
 
         this.pricePerCopy = 100.0; // 每用户单价
         this.revenueMultiplier = 1.0; // 收入乘数
@@ -697,6 +697,21 @@ class AIEmpireGame {
         document.getElementById('dashCapacity').textContent = `${this.formatNumber(this.systemCapacity)} req/s`;
         const loadRate = this.cachedStats.loadRate * 100;
         document.getElementById('loadBar').style.width = `${Math.min(loadRate, 100)}%`;
+
+        // 根据系统负载设置进度条颜色（蓝->黄->橙->红）
+        const loadBar = document.getElementById('loadBar');
+        if (loadRate < 25) {
+            loadBar.style.background = '#2196F3'; // 蓝色 - 负载低
+        } else if (loadRate < 50) {
+            loadBar.style.background = '#FFEB3B'; // 黄色
+        } else if (loadRate < 75) {
+            loadBar.style.background = '#FF9800'; // 橙色
+        } else if (loadRate < 100) {
+            loadBar.style.background = '#FF5722'; // 橙红色
+        } else {
+            loadBar.style.background = '#F44336'; // 红色 - 负载高
+        }
+
         document.getElementById('loadPercentage').textContent = `${loadRate.toFixed(1)}%`;
         document.getElementById('loadDecay').textContent = `${(this.cachedStats.loadDecay * 100).toFixed(0)}%`;
 
@@ -704,6 +719,21 @@ class AIEmpireGame {
         const marketRatio = (this.totalUsers / this.marketCapacity * 100).toFixed(1);
         document.getElementById('marketRatio').textContent = `${marketRatio}%`;
         document.getElementById('saturationBar').style.width = `${Math.min(parseFloat(marketRatio), 100)}%`;
+
+        // 根据市场饱和度设置进度条颜色（蓝->黄->橙->红）
+        const saturationBar = document.getElementById('saturationBar');
+        const ratio = Math.min(parseFloat(marketRatio), 100);
+        if (ratio < 25) {
+            saturationBar.style.background = '#2196F3'; // 蓝色 - 蓝海
+        } else if (ratio < 50) {
+            saturationBar.style.background = '#FFEB3B'; // 黄色
+        } else if (ratio < 75) {
+            saturationBar.style.background = '#FF9800'; // 橙色
+        } else if (ratio < 100) {
+            saturationBar.style.background = '#FF5722'; // 橙红色
+        } else {
+            saturationBar.style.background = '#F44336'; // 红色 - 红海
+        }
 
         document.getElementById('dashArpu').textContent = `$${this.cachedStats.arpu.toFixed(4)}`;
 

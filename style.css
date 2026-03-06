@@ -512,7 +512,7 @@ body {
     height: 100%;
     background: linear-gradient(90deg, #00ff88 0%, #00d4ff 100%);
     width: 0%;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, background 0.3s ease;
 }
 
 /* 日志框 */
