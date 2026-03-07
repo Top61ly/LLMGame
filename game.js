@@ -715,24 +715,40 @@ class AIEmpireGame {
         document.getElementById('loadPercentage').textContent = `${loadRate.toFixed(1)}%`;
         document.getElementById('loadDecay').textContent = `${(this.cachedStats.loadDecay * 100).toFixed(0)}%`;
 
-        document.getElementById('dashResistance').textContent = `${(this.cachedStats.marketResistance * 100).toFixed(1)}%`;
+        // 计算市场占用率
         const marketRatio = (this.totalUsers / this.marketCapacity * 100).toFixed(1);
-        document.getElementById('marketRatio').textContent = `${marketRatio}%`;
-        document.getElementById('saturationBar').style.width = `${Math.min(parseFloat(marketRatio), 100)}%`;
-
-        // 根据市场饱和度设置进度条颜色（蓝->黄->橙->红）
-        const saturationBar = document.getElementById('saturationBar');
         const ratio = Math.min(parseFloat(marketRatio), 100);
+
+        // 根据市场占用率显示四字词语
+        let saturationText;
         if (ratio < 25) {
-            saturationBar.style.background = '#2196F3'; // 蓝色 - 蓝海
+            saturationText = '新拓蓝海';
         } else if (ratio < 50) {
-            saturationBar.style.background = '#FFEB3B'; // 黄色
-        } else if (ratio < 75) {
-            saturationBar.style.background = '#FF9800'; // 橙色
-        } else if (ratio < 100) {
-            saturationBar.style.background = '#FF5722'; // 橙红色
+            saturationText = '新兴疆域';
+        } else if (ratio < 70) {
+            saturationText = '竞争红海';
+        } else if (ratio < 90) {
+            saturationText = '血流成河';
         } else {
-            saturationBar.style.background = '#F44336'; // 红色 - 红海
+            saturationText = '赤海炼狱';
+        }
+        document.getElementById('dashResistance').textContent = saturationText;
+
+        document.getElementById('marketRatio').textContent = `${marketRatio}%`;
+        document.getElementById('saturationBar').style.width = `${ratio}%`;
+
+        // 根据市场占用率设置进度条颜色
+        const saturationBar = document.getElementById('saturationBar');
+        if (ratio < 25) {
+            saturationBar.style.background = '#2196F3'; // 蓝色 - 新拓蓝海
+        } else if (ratio < 50) {
+            saturationBar.style.background = '#4CAF50'; // 绿色 - 新兴疆域
+        } else if (ratio < 70) {
+            saturationBar.style.background = '#FF9800'; // 橙色 - 竞争红海
+        } else if (ratio < 90) {
+            saturationBar.style.background = '#E91E63'; // 粉红色 - 血流成河
+        } else {
+            saturationBar.style.background = '#B71C1C'; // 深红色 - 赤海炼狱
         }
 
         document.getElementById('dashArpu').textContent = `$${this.cachedStats.arpu.toFixed(4)}`;
