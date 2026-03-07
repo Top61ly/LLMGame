@@ -87,13 +87,126 @@
   (快速恶化，可能出现严重负值)
 ```
 
-#### 3. Bug影响 (CalculateBugImpact)
+
+#### 3. Bug影响系统 (CalculateBugImpact)
+
+**文件**: `BugSimulation.cs`, `HypeSimulation.cs`
+
+##### 3.1 Bug产生机制 (BugSimulation.cs:27-47)
+
+**Bug生成公式**:
 ```
-检查点 = BugSoftCapacity × HypeBugBonusThreshold
-当 Bugs ≤ 检查点 时: 无影响
-当 Bugs > 检查点 时: 线性惩罚，直到达到HypeBugMaximumImpact上限
+BugGenerationRate = [BaseRate + PlayerScaling] × LoadMultiplier × Resistance
+
+其中:
+BaseRate = ModifierType.BugsGenerationRate (基础Bug生成速率)
+PlayerScaling = log10(玩家数) × BugsPlayerScaling (玩家规模影响)
+LoadMultiplier = 0.5 + Load (服务器负载影响, Load为0~1)
+Resistance = 1 / (1 + (Bugs/SoftCap)³) (软上限抵抗机制)
+
+每秒Bug增量:
+Database.Resources.Bugs += BugGenerationRate × deltaTime
 ```
 
+**关键特性**:
+- 玩家数量越多，Bug产生越快（对数增长）
+- 服务器负载越高，Bug产生越多（负载0时为50%基础速率）
+- Bug接近软上限时，生成速率显著下降（三次方阻力）
+
+##### 3.2 Bug容量限制 (Database.cs:130-140)
+
+```
+BugSoftCapacity = BugsSoftCapBase + log10(max(1, 玩家数)) × BugsSoftCapScaling
+BugHardCapacity = BugSoftCapacity × BugsHardCapModifier
+
+行为:
+- Bugs > BugHardCapacity: 完全停止Bug生成
+- Bugs接近SoftCap: 生成速率按Resistance衰减
+```
+
+**动态容量**: Bug容量随玩家规模自动增长，大型游戏允许更多Bug存在
+
+##### 3.3 Bug减少方式
+
+**方式1: Debugger修复** (DebuggerDatabase.cs:112)
+```
+修复量 = StagedHexes数量 × DebuggerHexBugWorth
+Database.Resources.Bugs -= 修复量
+```
+
+**方式2: Hotfix临时加速** (BugSimulation.cs:37-40)
+```
+Hotfix后触发BonusDecayTimer:
+- 持续时间: DebuggerHotfixBonusDuration
+- 衰减速率: DebuggerHotfixBonusDecayRate
+- 效果: BugRate = max(0, BugRate - BonusDecayRate)
+```
+
+##### 3.4 Bug对Hype的两阶段影响 (HypeSimulation.cs:56-64)
+
+**核心公式**:
+```csharp
+float threshold = BugSoftCapacity × HypeBugBonusThreshold;
+
+if (Bugs <= threshold) {
+    // 阶段1: 奖励区 - Bug少增加Hype
+    impact = (1 - Bugs/threshold) × HypeBugBonus;
+} else {
+    // 阶段2: 惩罚区 - Bug多降低Hype (二次方惩罚)
+    pressure = (Bugs / HypeBugTolerance)²;
+    impact = -pressure × HypeBugPenalty;
+}
+```
+
+**阶段1: Bug奖励区** (Bugs ≤ Threshold)
+```
+Threshold = BugSoftCapacity × HypeBugBonusThreshold
+
+Bugs = 0              → impact = +HypeBugBonus (100%奖励)
+Bugs = 0.5×Threshold  → impact = +0.5×HypeBugBonus (50%奖励)
+Bugs = Threshold      → impact = 0 (临界点)
+
+设计理念: 适度低Bug体现游戏质量稳定，增加玩家信心
+```
+
+**阶段2: Bug惩罚区** (Bugs > Threshold)
+```
+压力函数 Pressure(value, softCap) = (value / softCap)²
+
+Bugs = HypeBugTolerance   → pressure = 1.00 → impact = -HypeBugPenalty
+Bugs = 2×HypeBugTolerance → pressure = 4.00 → impact = -4×HypeBugPenalty
+Bugs = 3×HypeBugTolerance → pressure = 9.00 → impact = -9×HypeBugPenalty
+
+警告: Bug超过容忍度后，Hype惩罚呈指数级恶化！
+```
+
+**影响图示**:
+```
+Hype Impact
+    ↑
+ +Bonus|     ●●●●●●
+        |   ●        ●
+        | ●            ●
+      0 |_______________●_______________ Bugs
+        |                ●
+        |                  ●●
+        |                    ●●●
+ -Penalty|                      ●●●●●●●
+        |                            (急剧下降)
+        └─────┬─────────┬─────────────→
+          奖励区    临界点    惩罚区
+```
+
+**HypeSimulation最终计算** (HypeSimulation.cs:19-24):
+```
+TargetHype = ModifierType.Hype 
+           + CalculateLowLoadBonus()    // 低负载奖励
+           - CalculatePingImpact()      // Ping影响
+           - CalculateBugImpact()       // Bug影响 (可为负=奖励)
+
+TargetHype = Clamp(TargetHype, HypeMinimum, HypeMaximum)
+Hype = MoveTowards(Hype, TargetHype, HypeChangeSpeed × deltaTime)
+```
 
 
 ## 三、盈利计算 (Revenue)
