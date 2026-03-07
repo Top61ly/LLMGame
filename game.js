@@ -431,11 +431,6 @@ class AIEmpireGame {
             this.bugCount++;
         }
 
-        // 每秒有一定概率修复Bug
-        if (Math.random() < 0.05) {
-            this.bugCount = Math.max(0, this.bugCount - 1);
-        }
-
         // 缓存负载信息
         this.cachedStats.loadRate = loadRate;
     }
