@@ -53,14 +53,23 @@ class AIEmpireGame {
         this.bugHardCapacity = 160; // Bug硬容量（动态）
         this.bugsGenerationRate = 1.0; // 基础Bug生成速率
         this.bugsUserScaling = 0.1; // 用户规模带来的Bug增量系数
+        this.bugsLoadBase = 0.35; // 负载乘数基础值
+        this.bugsLoadScaling = 0.75; // 负载乘数斜率
         this.bugsSoftCapBase = 50; // Bug软容量基础值
         this.bugsSoftCapScaling = 10; // Bug软容量对用户规模的对数缩放
         this.bugsHardCapModifier = 2.0; // Bug硬容量 = 软容量 * 该系数
+
+        // 被动修复（让系统存在自然恢复能力）
+        this.bugFixBaseRate = 0.25; // 基础每秒修复
+        this.bugFixUserScaling = 0.08; // 用户规模带来的修复增量
+        this.bugFixLowLoadBonus = 1.2; // 低负载时修复效率加成
+        this.bugFixPressureBoost = 0.6; // Bug压力越高，修复越强
 
         // ========== 校准修复系统 ==========
         this.fixBugMin = 4;
         this.fixBugMax = 6;
         this.fixStreakBonus = 1;
+        this.fixPressureScale = 0.8;
         this.calibrationStreak = 0;
         this.currentChallenge = null;
         this.currentChallengeAnswer = null;
@@ -412,10 +421,22 @@ class AIEmpireGame {
 
         const baseRate = this.bugsGenerationRate;
         const userScaling = Math.log10(Math.max(1, this.totalUsers)) * this.bugsUserScaling;
-        const loadMultiplier = 0.5 + loadRate;
+        const loadMultiplier = this.bugsLoadBase + loadRate * this.bugsLoadScaling;
         const softCapResistance = 1 / (1 + Math.pow(this.bugCount / this.bugSoftCapacity, 3));
 
         return (baseRate + userScaling) * loadMultiplier * softCapResistance;
+    }
+
+    /**
+     * 计算每秒被动修复速率
+     */
+    calculateBugFixRate(loadRate) {
+        const userScaling = Math.log10(Math.max(1, this.totalUsers)) * this.bugFixUserScaling;
+        const lowLoadFactor = 1 + Math.max(0, 1 - loadRate) * this.bugFixLowLoadBonus;
+        const pressureRatio = this.bugSoftCapacity > 0 ? this.bugCount / this.bugSoftCapacity : 0;
+        const pressureFactor = 1 + Math.max(0, pressureRatio - 1) * this.bugFixPressureBoost;
+
+        return (this.bugFixBaseRate + userScaling) * lowLoadFactor * pressureFactor;
     }
 
     /**
@@ -490,7 +511,9 @@ class AIEmpireGame {
         // 更新Bug系统（动态容量 + 公式生成）
         this.calculateBugCapacities();
         const bugGenerationRate = this.calculateBugGenerationRate(loadRate);
+        const bugFixRate = this.calculateBugFixRate(loadRate);
         this.bugCount = Math.min(this.bugCount + bugGenerationRate * this.deltaTime, this.bugHardCapacity);
+        this.bugCount = Math.max(0, this.bugCount - bugFixRate * this.deltaTime);
 
         // 缓存负载信息
         this.cachedStats.loadRate = loadRate;
@@ -863,13 +886,15 @@ class AIEmpireGame {
 
             const baseFix = this.randomInt(this.fixBugMin, this.fixBugMax);
             const streakBonus = this.calibrationStreak >= 3 ? this.fixStreakBonus : 0;
-            const totalFix = baseFix + streakBonus;
+            const pressureRatio = this.bugSoftCapacity > 0 ? this.bugCount / this.bugSoftCapacity : 0;
+            const pressureBonus = Math.floor(Math.max(0, pressureRatio - 1) * this.fixPressureScale * baseFix);
+            const totalFix = baseFix + streakBonus + pressureBonus;
 
             const oldBug = this.bugCount;
             this.bugCount = Math.max(0, this.bugCount - totalFix);
             this.lastCalibrationFix = oldBug - this.bugCount;
 
-            resultEl.textContent = `修复成功：-${this.lastCalibrationFix.toFixed(0)} Bug（基础 ${baseFix}${streakBonus > 0 ? ` + 连胜${streakBonus}` : ''}）`;
+            resultEl.textContent = `修复成功：-${this.lastCalibrationFix.toFixed(0)} Bug（基础 ${baseFix}${streakBonus > 0 ? ` + 连胜${streakBonus}` : ''}${pressureBonus > 0 ? ` + 压力${pressureBonus}` : ''}）`;
             resultEl.style.color = '#00ff88';
             this.addBottomEventLog(`校准完成，修复 Bug -${this.lastCalibrationFix.toFixed(0)}`, 'success');
         } else {
