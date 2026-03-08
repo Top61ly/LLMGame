@@ -42,13 +42,20 @@ class AIEmpireGame {
         this.hypePingMinorImpact = 0.3;
         this.hypePingMajorImpact = 100;
         
-        this.hypeBugBonusThreshold = 0.8;
-        this.hypeBugMaximumImpact = 1.0;
+        this.hypeBugBonusThreshold = 0.3;
+        this.hypeBugBonus = 0.2;
+        this.hypeBugPenalty = 0.5;
 
         // ========== 服务质量指标 ==========
         this.ping = 50; // 延迟（ms）
         this.bugCount = 0; // Bug数量
-        this.bugSoftCapacity = 100; // Bug软容量
+        this.bugSoftCapacity = 80; // Bug软容量（动态）
+        this.bugHardCapacity = 160; // Bug硬容量（动态）
+        this.bugsGenerationRate = 1.0; // 基础Bug生成速率
+        this.bugsUserScaling = 0.1; // 用户规模带来的Bug增量系数
+        this.bugsSoftCapBase = 50; // Bug软容量基础值
+        this.bugsSoftCapScaling = 10; // Bug软容量对用户规模的对数缩放
+        this.bugsHardCapModifier = 2.0; // Bug硬容量 = 软容量 * 该系数
 
         // ========== 建筑系统 ==========
         this.buildings = {
@@ -60,7 +67,7 @@ class AIEmpireGame {
 
         // ========== 产品系统 ==========
         this.products = {
-            textAPI: { unlocked: false, developed: false, devCost: 1000000, devTime: 3600, effect: 1.0, name: '文本API' },
+            textAPI: { unlocked: true, developed: false, devCost: 1000000, devTime: 3600, effect: 1.0, name: '文本API' },
             imageAPI: { unlocked: false, developed: false, devCost: 5000000, devTime: 7200, effect: 1.5, name: '图像API' },
             speechAPI: { unlocked: false, developed: false, devCost: 3000000, devTime: 5400, effect: 1.2, name: '语音API' },
         };
@@ -73,6 +80,7 @@ class AIEmpireGame {
             loadDecay: 1.0,
             loadRate: 0,
             arpu: 0,
+            bugGenerationRate: 0,
         };
 
         // ========== 热点新闻 ==========
@@ -262,6 +270,7 @@ class AIEmpireGame {
             pricePerCopy: this.pricePerCopy,
             revenueMultiplier: this.revenueMultiplier,
             systemCapacity: this.systemCapacity,
+            bugCount: this.bugCount,
             buildings: this.buildings,
             products: this.products,
         };
@@ -282,6 +291,7 @@ class AIEmpireGame {
             this.pricePerCopy = data.pricePerCopy;
             this.revenueMultiplier = data.revenueMultiplier;
             this.systemCapacity = data.systemCapacity;
+            this.bugCount = data.bugCount || 0;
             this.buildings = data.buildings;
             this.products = data.products;
         }
@@ -346,15 +356,45 @@ class AIEmpireGame {
             factors.pingImpact = -this.hypePingMinorImpact - (this.ping - this.hypePingMajorTolerance) / this.hypePingMajorImpact;
         }
 
-        // Bug影响
+        // Bug影响（两阶段）
         const bugThreshold = this.bugSoftCapacity * this.hypeBugBonusThreshold;
-        if (this.bugCount > bugThreshold) 
-        {
-            const overRatio = (this.bugCount - bugThreshold) / this.bugSoftCapacity;
-            factors.bugImpact = -Math.min(overRatio, this.hypeBugMaximumImpact);
+        const tolerance = this.bugSoftCapacity;
+        if (this.bugCount <= bugThreshold && bugThreshold > 0) {
+            factors.bugImpact = (1 - this.bugCount / bugThreshold) * this.hypeBugBonus;
+        } else if (tolerance > 0) {
+            const pressure = Math.pow(this.bugCount / tolerance, 2);
+            factors.bugImpact = -pressure * this.hypeBugPenalty;
         }
 
         return factors;
+    }
+
+    /**
+     * 计算Bug动态容量（随用户规模增长）
+     */
+    calculateBugCapacities() {
+        const userLog = Math.log10(Math.max(1, this.totalUsers));
+        const softCap = this.bugsSoftCapBase + userLog * this.bugsSoftCapScaling;
+        const hardCap = softCap * this.bugsHardCapModifier;
+
+        this.bugSoftCapacity = Math.max(1, softCap);
+        this.bugHardCapacity = Math.max(this.bugSoftCapacity, hardCap);
+    }
+
+    /**
+     * 计算每秒Bug生成速率
+     */
+    calculateBugGenerationRate(loadRate) {
+        if (this.bugCount >= this.bugHardCapacity) {
+            return 0;
+        }
+
+        const baseRate = this.bugsGenerationRate;
+        const userScaling = Math.log10(Math.max(1, this.totalUsers)) * this.bugsUserScaling;
+        const loadMultiplier = 0.5 + loadRate;
+        const softCapResistance = 1 / (1 + Math.pow(this.bugCount / this.bugSoftCapacity, 3));
+
+        return (baseRate + userScaling) * loadMultiplier * softCapResistance;
     }
 
     /**
@@ -426,13 +466,14 @@ class AIEmpireGame {
         const basePing = 50;
         this.ping = basePing + loadRate * 200; // 负载越高，延迟越大
 
-        // 动态生成Bug（基于负载）
-        if (Math.random() < loadRate * 0.01) { // 负载越高，Bug产生概率越高
-            this.bugCount++;
-        }
+        // 更新Bug系统（动态容量 + 公式生成）
+        this.calculateBugCapacities();
+        const bugGenerationRate = this.calculateBugGenerationRate(loadRate);
+        this.bugCount = Math.min(this.bugCount + bugGenerationRate * this.deltaTime, this.bugHardCapacity);
 
         // 缓存负载信息
         this.cachedStats.loadRate = loadRate;
+        this.cachedStats.bugGenerationRate = bugGenerationRate;
     }
 
     /**
@@ -784,9 +825,11 @@ class AIEmpireGame {
 
         // 更新Bug数（带颜色）
         const bugEl = document.getElementById('bugValue');
-        bugEl.textContent = `${this.bugCount}`;
+        bugEl.textContent = `${Math.floor(this.bugCount)}`;
         if (this.bugCount >= this.bugSoftCapacity) {
             bugEl.style.color = '#ff4444'; // 红色
+        } else if (this.bugCount > this.bugSoftCapacity * this.hypeBugBonusThreshold) {
+            bugEl.style.color = '#ffff00'; // 黄色
         } else {
             bugEl.style.color = '#00ff88'; // 绿色
         }
