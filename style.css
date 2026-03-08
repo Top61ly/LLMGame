@@ -606,6 +606,111 @@ body {
     cursor: not-allowed;
 }
 
+/* 校准模块 */
+.calibration-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.calibration-status {
+    font-size: 13px;
+    color: #00d4ff;
+    background: rgba(0, 212, 255, 0.08);
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.calibration-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.mini-game-card {
+    background: rgba(0, 212, 255, 0.05);
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mini-game-title {
+    color: #00ff88;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.mini-game-desc {
+    color: #9ab;
+    font-size: 12px;
+    min-height: 34px;
+}
+
+.challenge-box {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(0, 255, 136, 0.05) 100%);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.challenge-title {
+    color: #00ff88;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.challenge-desc {
+    color: #d0d8e8;
+    font-size: 13px;
+}
+
+.challenge-hint {
+    color: #88a3c7;
+    font-size: 12px;
+}
+
+.challenge-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.challenge-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid rgba(0, 212, 255, 0.5);
+    background: rgba(9, 16, 35, 0.7);
+    color: #eaf4ff;
+    border-radius: 6px;
+    padding: 9px 10px;
+    font-size: 13px;
+    outline: none;
+}
+
+.challenge-input:focus {
+    border-color: #00ff88;
+    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+}
+
+.challenge-submit-btn {
+    width: auto;
+    min-width: 94px;
+}
+
+.challenge-result {
+    min-height: 20px;
+    font-size: 13px;
+    color: #00d4ff;
+    font-weight: bold;
+}
+
 /* 右侧边栏 */
 .sidebar-right {
     grid-column: 3;
@@ -1142,5 +1247,10 @@ body {
 
     .stat-value {
         font-size: 13px;
+    }
+
+    .challenge-input-row {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

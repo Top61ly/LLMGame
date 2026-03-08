@@ -57,6 +57,16 @@ class AIEmpireGame {
         this.bugsSoftCapScaling = 10; // Bug软容量对用户规模的对数缩放
         this.bugsHardCapModifier = 2.0; // Bug硬容量 = 软容量 * 该系数
 
+        // ========== 校准修复系统 ==========
+        this.fixBugMin = 4;
+        this.fixBugMax = 6;
+        this.fixStreakBonus = 1;
+        this.calibrationStreak = 0;
+        this.currentChallenge = null;
+        this.currentChallengeAnswer = null;
+        this.currentChallengeMeta = null;
+        this.lastCalibrationFix = 0;
+
         // ========== 建筑系统 ==========
         this.buildings = {
             cpu: { count: 0, baseCost: 5000, capacity: 500, costFactor: 1.15, name: 'CPU集群' },
@@ -271,6 +281,7 @@ class AIEmpireGame {
             revenueMultiplier: this.revenueMultiplier,
             systemCapacity: this.systemCapacity,
             bugCount: this.bugCount,
+            calibrationStreak: this.calibrationStreak,
             buildings: this.buildings,
             products: this.products,
         };
@@ -294,7 +305,17 @@ class AIEmpireGame {
             this.bugCount = data.bugCount || 0;
             this.buildings = data.buildings;
             this.products = data.products;
+
+            // 存档兼容：缺失时使用默认值
+            this.calibrationStreak = data.calibrationStreak || 0;
         }
+    }
+
+    /**
+     * 返回[min, max]的随机整数
+     */
+    randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     // ========== 核心公式 ==========
@@ -628,6 +649,15 @@ class AIEmpireGame {
         this.setupNavigation();
         this.renderBuildings();
         this.renderProducts();
+
+        const calibrationInput = document.getElementById('challengeInput');
+        if (calibrationInput) {
+            calibrationInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.submitCalibrationAnswer();
+                }
+            });
+        }
     }
 
     setupNavigation() {
@@ -704,6 +734,163 @@ class AIEmpireGame {
                 </button>
             `;
             container.appendChild(card);
+        }
+    }
+
+    // ========== 校准修复系统 ==========
+
+    startCalibrationChallenge(type) {
+        const inputEl = document.getElementById('challengeInput');
+        const titleEl = document.getElementById('challengeTitle');
+        const descEl = document.getElementById('challengeDescription');
+        const hintEl = document.getElementById('challengeHint');
+        const submitBtn = document.getElementById('challengeSubmitBtn');
+        const resultEl = document.getElementById('calibrationResult');
+
+        if (!inputEl || !titleEl || !descEl || !hintEl || !submitBtn || !resultEl) return;
+
+        if (type === 'math') {
+            const a = this.randomInt(2, 30);
+            const b = this.randomInt(2, 20);
+            const opPool = ['+', '-', '*'];
+            const op = opPool[this.randomInt(0, opPool.length - 1)];
+            const answer = op === '+' ? a + b : op === '-' ? a - b : a * b;
+
+            this.currentChallenge = 'math';
+            this.currentChallengeAnswer = String(answer);
+            this.currentChallengeMeta = null;
+
+            titleEl.textContent = '➕ 心算快答';
+            descEl.textContent = `请计算：${a} ${op} ${b} = ?`;
+            hintEl.textContent = '输入整数答案后提交';
+            inputEl.placeholder = '例如：42';
+        } else if (type === 'captcha') {
+            const beasts = ['龙', '凤', '虎', '龟', '麒'];
+            const target = beasts[this.randomInt(0, beasts.length - 1)];
+            const symbols = Array.from({ length: 10 }, () => beasts[this.randomInt(0, beasts.length - 1)]);
+            const answer = symbols.filter((s) => s === target).length;
+
+            this.currentChallenge = 'captcha';
+            this.currentChallengeAnswer = String(answer);
+            this.currentChallengeMeta = { target, symbols };
+
+            titleEl.textContent = '🧩 神兽验证码';
+            descEl.textContent = `验证码：${symbols.join(' ')} | 目标：统计“${target}”出现次数`;
+            hintEl.textContent = '输入出现次数（整数）';
+            inputEl.placeholder = '例如：3';
+        } else if (type === 'twentyFour') {
+            const puzzlePool = [
+                [3, 3, 8, 8],
+                [2, 3, 4, 6],
+                [1, 5, 5, 5],
+                [4, 4, 10, 10],
+                [2, 7, 7, 8],
+            ];
+            const nums = puzzlePool[this.randomInt(0, puzzlePool.length - 1)];
+
+            this.currentChallenge = 'twentyFour';
+            this.currentChallengeAnswer = '24';
+            this.currentChallengeMeta = { nums };
+
+            titleEl.textContent = '♠️ 快算24';
+            descEl.textContent = `请用数字 ${nums.join(', ')} 各一次，输入等于24的表达式`;
+            hintEl.textContent = '可用 + - * / ()，例如：(8/(3-8/3))';
+            inputEl.placeholder = '输入表达式，例如：(8/(3-8/3))';
+        } else {
+            return;
+        }
+
+        inputEl.value = '';
+        submitBtn.disabled = false;
+        resultEl.textContent = '挑战已开始，完成后点击提交。';
+        resultEl.style.color = '#00d4ff';
+        inputEl.focus();
+    }
+
+    isValidTwentyFourExpression(expr, nums) {
+        if (!expr || !nums) return false;
+
+        const sanitized = expr.replace(/\s+/g, '');
+        if (!/^[0-9+\-*/()\.]+$/.test(sanitized)) return false;
+
+        const tokens = sanitized.match(/\d+/g) || [];
+        if (tokens.length !== nums.length) return false;
+
+        const tokenNums = tokens.map((x) => Number(x)).sort((a, b) => a - b);
+        const targetNums = [...nums].sort((a, b) => a - b);
+        for (let i = 0; i < targetNums.length; i++) {
+            if (tokenNums[i] !== targetNums[i]) {
+                return false;
+            }
+        }
+
+        try {
+            const value = Function(`"use strict"; return (${sanitized});`)();
+            return Number.isFinite(value) && Math.abs(value - 24) < 1e-6;
+        } catch {
+            return false;
+        }
+    }
+
+    submitCalibrationAnswer() {
+        const inputEl = document.getElementById('challengeInput');
+        const resultEl = document.getElementById('calibrationResult');
+        const submitBtn = document.getElementById('challengeSubmitBtn');
+
+        if (!inputEl || !resultEl || !submitBtn) return;
+        if (!this.currentChallenge) {
+            resultEl.textContent = '请先选择一个挑战。';
+            resultEl.style.color = '#ffff00';
+            return;
+        }
+
+        const userAnswer = inputEl.value.trim();
+        if (!userAnswer) {
+            resultEl.textContent = '请输入答案后再提交。';
+            resultEl.style.color = '#ffff00';
+            return;
+        }
+
+        let correct = false;
+        if (this.currentChallenge === 'twentyFour') {
+            correct = this.isValidTwentyFourExpression(userAnswer, this.currentChallengeMeta?.nums);
+        } else {
+            correct = userAnswer === this.currentChallengeAnswer;
+        }
+
+        if (correct) {
+            this.calibrationStreak += 1;
+
+            const baseFix = this.randomInt(this.fixBugMin, this.fixBugMax);
+            const streakBonus = this.calibrationStreak >= 3 ? this.fixStreakBonus : 0;
+            const totalFix = baseFix + streakBonus;
+
+            const oldBug = this.bugCount;
+            this.bugCount = Math.max(0, this.bugCount - totalFix);
+            this.lastCalibrationFix = oldBug - this.bugCount;
+
+            resultEl.textContent = `修复成功：-${this.lastCalibrationFix.toFixed(0)} Bug（基础 ${baseFix}${streakBonus > 0 ? ` + 连胜${streakBonus}` : ''}）`;
+            resultEl.style.color = '#00ff88';
+            this.addBottomEventLog(`校准完成，修复 Bug -${this.lastCalibrationFix.toFixed(0)}`, 'success');
+        } else {
+            this.calibrationStreak = 0;
+            this.lastCalibrationFix = 0;
+            resultEl.textContent = '答案不正确，本次未修复 Bug。';
+            resultEl.style.color = '#ffff00';
+            this.addBottomEventLog('校准失败，未修复 Bug', 'warning');
+        }
+
+        submitBtn.disabled = true;
+        this.currentChallenge = null;
+        this.currentChallengeAnswer = null;
+        this.currentChallengeMeta = null;
+        inputEl.value = '';
+    }
+
+    updateCalibrationUI() {
+        const statusEl = document.getElementById('calibrationStatus');
+        if (statusEl) {
+            statusEl.textContent = `当前Bug: ${Math.floor(this.bugCount)} | SoftCap: ${Math.floor(this.bugSoftCapacity)} | HardCap: ${Math.floor(this.bugHardCapacity)} | 连胜: ${this.calibrationStreak}`;
         }
     }
 
@@ -854,6 +1041,9 @@ class AIEmpireGame {
                 }
             }
         }
+
+        // 更新校准面板
+        this.updateCalibrationUI();
     }
 
     addLog(message, type = 'info') {

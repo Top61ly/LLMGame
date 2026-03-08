@@ -57,6 +57,7 @@
                     <button class="nav-btn active" data-page="overview">📊 总览</button>
                     <button class="nav-btn" data-page="buildings">⚙️ 建筑</button>
                     <button class="nav-btn" data-page="products">🤖 产品</button>
+                    <button class="nav-btn" data-page="calibration">🛠 校准</button>
                 </nav>
             </div>
 
@@ -133,6 +134,47 @@
                     <h2>🤖 产品系统</h2>
                     <div class="products-grid" id="productsContainer">
                         <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 🛠 校准页面 -->
+                <div class="page" id="page-calibration">
+                    <h2>🛠 校准中心</h2>
+                    <div class="calibration-panel">
+                        <div class="calibration-status" id="calibrationStatus">
+                            当前Bug: 0 | SoftCap: 0 | HardCap: 0 | 连胜: 0
+                        </div>
+
+                        <div class="calibration-grid">
+                            <div class="mini-game-card">
+                                <div class="mini-game-title">➕ 心算快答</div>
+                                <div class="mini-game-desc">基础数学计算，限时思维热身</div>
+                                <button class="build-btn" onclick="game.startCalibrationChallenge('math')">开始挑战</button>
+                            </div>
+
+                            <div class="mini-game-card">
+                                <div class="mini-game-title">🧩 神兽验证码</div>
+                                <div class="mini-game-desc">识别符号规律，模拟数据标注</div>
+                                <button class="build-btn" onclick="game.startCalibrationChallenge('captcha')">开始挑战</button>
+                            </div>
+
+                            <div class="mini-game-card">
+                                <div class="mini-game-title">♠️ 快算24</div>
+                                <div class="mini-game-desc">组合推理表达式，纠正推理链路</div>
+                                <button class="build-btn" onclick="game.startCalibrationChallenge('twentyFour')">开始挑战</button>
+                            </div>
+                        </div>
+
+                        <div class="challenge-box">
+                            <div class="challenge-title" id="challengeTitle">请选择一个挑战开始校准</div>
+                            <div class="challenge-desc" id="challengeDescription">完成挑战后可修复 4-6 个Bug</div>
+                            <div class="challenge-input-row">
+                                <input id="challengeInput" class="challenge-input" type="text" placeholder="输入答案后点击提交" />
+                                <button id="challengeSubmitBtn" class="build-btn challenge-submit-btn" onclick="game.submitCalibrationAnswer()" disabled>提交答案</button>
+                            </div>
+                            <div class="challenge-hint" id="challengeHint">提示：连续答对可获得额外修复奖励</div>
+                            <div class="challenge-result" id="calibrationResult">等待挑战...</div>
+                        </div>
                     </div>
                 </div>
             </div>
