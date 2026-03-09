@@ -623,9 +623,8 @@ body {
 }
 
 .calibration-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
+    display: flex;
+    justify-content: center;
 }
 
 .mini-game-card {
@@ -636,6 +635,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    max-width: 520px;
 }
 
 .mini-game-title {
@@ -654,10 +654,14 @@ body {
     background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(0, 255, 136, 0.05) 100%);
     border: 1px solid rgba(0, 255, 136, 0.3);
     border-radius: 10px;
-    padding: 14px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 420px;
+    height: 420px;
+    align-self: center;
+    justify-content: center;
 }
 
 .challenge-title {
@@ -678,12 +682,12 @@ body {
 
 .challenge-input-row {
     display: flex;
-    gap: 10px;
-    align-items: center;
+    gap: 8px;
+    align-items: stretch;
 }
 
 .challenge-input {
-    flex: 1;
+    width: 100%;
     min-width: 0;
     border: 1px solid rgba(0, 212, 255, 0.5);
     background: rgba(9, 16, 35, 0.7);
@@ -700,15 +704,12 @@ body {
 }
 
 .challenge-submit-btn {
-    width: auto;
-    min-width: 94px;
+    width: 100%;
+    min-width: 0;
 }
 
 .challenge-result {
-    min-height: 20px;
-    font-size: 13px;
-    color: #00d4ff;
-    font-weight: bold;
+    display: none;
 }
 
 /* 右侧边栏 */
@@ -1249,8 +1250,16 @@ body {
         font-size: 13px;
     }
 
-    .challenge-input-row {
-        flex-direction: column;
-        align-items: stretch;
+    .challenge-box {
+        width: 360px;
+        height: 360px;
+    }
+}
+
+@media (max-width: 768px) {
+    .challenge-box {
+        width: 320px;
+        height: 320px;
+        padding: 12px;
     }
 }

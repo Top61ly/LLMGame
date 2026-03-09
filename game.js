@@ -70,10 +70,14 @@ class AIEmpireGame {
         this.fixBugMax = 6;
         this.fixStreakBonus = 1;
         this.fixPressureScale = 0.8;
+        this.skipBugPenaltyBase = 2;
+        this.skipBugPenaltyPressureScale = 1.0;
         this.calibrationStreak = 0;
         this.currentChallenge = null;
         this.currentChallengeAnswer = null;
         this.currentChallengeMeta = null;
+        this.lastCalibrationChallengeType = null;
+        this.calibrationAutoNextTimer = null;
         this.lastCalibrationFix = 0;
 
         // ========== 建筑系统 ==========
@@ -696,12 +700,83 @@ class AIEmpireGame {
 
                 pages.forEach((p) => p.classList.remove('active'));
                 document.getElementById(pageId).classList.add('active');
+
+                if (btn.dataset.page === 'calibration') {
+                    this.resumeCalibrationAutoFlow();
+                } else {
+                    this.pauseCalibrationAutoFlow();
+                }
             });
         });
 
         // 默认显示overview
         document.querySelector('[data-page="overview"]').classList.add('active');
         document.getElementById('page-overview').classList.add('active');
+    }
+
+    isCalibrationPageActive() {
+        const page = document.getElementById('page-calibration');
+        return !!page && page.classList.contains('active');
+    }
+
+    clearCalibrationAutoTimer() {
+        if (this.calibrationAutoNextTimer) {
+            clearTimeout(this.calibrationAutoNextTimer);
+            this.calibrationAutoNextTimer = null;
+        }
+    }
+
+    resetCalibrationChallengeState() {
+        const inputEl = document.getElementById('challengeInput');
+        const submitBtn = document.getElementById('challengeSubmitBtn');
+        const skipBtn = document.getElementById('challengeSkipBtn');
+        const titleEl = document.getElementById('challengeTitle');
+        const descEl = document.getElementById('challengeDescription');
+        const hintEl = document.getElementById('challengeHint');
+
+        this.currentChallenge = null;
+        this.currentChallengeAnswer = null;
+        this.currentChallengeMeta = null;
+
+        if (inputEl) {
+            inputEl.value = '';
+        }
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+        if (skipBtn) {
+            skipBtn.disabled = true;
+        }
+        if (titleEl) {
+            titleEl.textContent = '系统将自动派发校准任务';
+        }
+        if (descEl) {
+            descEl.textContent = '完成挑战后可修复 4-6 个Bug';
+        }
+        if (hintEl) {
+            hintEl.textContent = '提示：连续答对可获得额外修复奖励';
+        }
+    }
+
+    pauseCalibrationAutoFlow() {
+        this.clearCalibrationAutoTimer();
+        this.resetCalibrationChallengeState();
+    }
+
+    resumeCalibrationAutoFlow() {
+        if (!this.isCalibrationPageActive()) return;
+        this.clearCalibrationAutoTimer();
+        this.startCalibrationChallenge();
+    }
+
+    scheduleNextCalibrationChallenge(delayMs) {
+        this.clearCalibrationAutoTimer();
+        this.calibrationAutoNextTimer = setTimeout(() => {
+            this.calibrationAutoNextTimer = null;
+            if (this.isCalibrationPageActive()) {
+                this.startCalibrationChallenge();
+            }
+        }, delayMs);
     }
 
     renderBuildings() {
@@ -763,16 +838,32 @@ class AIEmpireGame {
     // ========== 校准修复系统 ==========
 
     startCalibrationChallenge(type) {
+        if (!this.isCalibrationPageActive()) return;
+
+        this.clearCalibrationAutoTimer();
+
         const inputEl = document.getElementById('challengeInput');
         const titleEl = document.getElementById('challengeTitle');
         const descEl = document.getElementById('challengeDescription');
         const hintEl = document.getElementById('challengeHint');
         const submitBtn = document.getElementById('challengeSubmitBtn');
-        const resultEl = document.getElementById('calibrationResult');
+        const skipBtn = document.getElementById('challengeSkipBtn');
 
-        if (!inputEl || !titleEl || !descEl || !hintEl || !submitBtn || !resultEl) return;
+        if (!inputEl || !titleEl || !descEl || !hintEl || !submitBtn || !skipBtn) return;
 
-        if (type === 'math') {
+        const challengePool = ['math', 'captcha', 'twentyFour'];
+        let challengeType = type;
+
+        if (!challengeType) {
+            const randomPool = this.lastCalibrationChallengeType
+                ? challengePool.filter((item) => item !== this.lastCalibrationChallengeType)
+                : challengePool;
+            challengeType = randomPool[this.randomInt(0, randomPool.length - 1)];
+        }
+
+        this.lastCalibrationChallengeType = challengeType;
+
+        if (challengeType === 'math') {
             const a = this.randomInt(2, 30);
             const b = this.randomInt(2, 20);
             const opPool = ['+', '-', '*'];
@@ -787,7 +878,7 @@ class AIEmpireGame {
             descEl.textContent = `请计算：${a} ${op} ${b} = ?`;
             hintEl.textContent = '输入整数答案后提交';
             inputEl.placeholder = '例如：42';
-        } else if (type === 'captcha') {
+        } else if (challengeType === 'captcha') {
             const beasts = ['龙', '凤', '虎', '龟', '麒'];
             const target = beasts[this.randomInt(0, beasts.length - 1)];
             const symbols = Array.from({ length: 10 }, () => beasts[this.randomInt(0, beasts.length - 1)]);
@@ -801,7 +892,7 @@ class AIEmpireGame {
             descEl.textContent = `验证码：${symbols.join(' ')} | 目标：统计“${target}”出现次数`;
             hintEl.textContent = '输入出现次数（整数）';
             inputEl.placeholder = '例如：3';
-        } else if (type === 'twentyFour') {
+        } else if (challengeType === 'twentyFour') {
             const puzzlePool = [
                 [3, 3, 8, 8],
                 [2, 3, 4, 6],
@@ -825,8 +916,7 @@ class AIEmpireGame {
 
         inputEl.value = '';
         submitBtn.disabled = false;
-        resultEl.textContent = '挑战已开始，完成后点击提交。';
-        resultEl.style.color = '#00d4ff';
+        skipBtn.disabled = false;
         inputEl.focus();
     }
 
@@ -857,20 +947,19 @@ class AIEmpireGame {
 
     submitCalibrationAnswer() {
         const inputEl = document.getElementById('challengeInput');
-        const resultEl = document.getElementById('calibrationResult');
         const submitBtn = document.getElementById('challengeSubmitBtn');
+        const skipBtn = document.getElementById('challengeSkipBtn');
 
-        if (!inputEl || !resultEl || !submitBtn) return;
+        if (!inputEl || !submitBtn || !skipBtn) return;
         if (!this.currentChallenge) {
-            resultEl.textContent = '请先选择一个挑战。';
-            resultEl.style.color = '#ffff00';
+            if (this.isCalibrationPageActive()) {
+                this.startCalibrationChallenge();
+            }
             return;
         }
 
         const userAnswer = inputEl.value.trim();
         if (!userAnswer) {
-            resultEl.textContent = '请输入答案后再提交。';
-            resultEl.style.color = '#ffff00';
             return;
         }
 
@@ -893,23 +982,59 @@ class AIEmpireGame {
             const oldBug = this.bugCount;
             this.bugCount = Math.max(0, this.bugCount - totalFix);
             this.lastCalibrationFix = oldBug - this.bugCount;
-
-            resultEl.textContent = `修复成功：-${this.lastCalibrationFix.toFixed(0)} Bug（基础 ${baseFix}${streakBonus > 0 ? ` + 连胜${streakBonus}` : ''}${pressureBonus > 0 ? ` + 压力${pressureBonus}` : ''}）`;
-            resultEl.style.color = '#00ff88';
             this.addBottomEventLog(`校准完成，修复 Bug -${this.lastCalibrationFix.toFixed(0)}`, 'success');
         } else {
             this.calibrationStreak = 0;
             this.lastCalibrationFix = 0;
-            resultEl.textContent = '答案不正确，本次未修复 Bug。';
-            resultEl.style.color = '#ffff00';
             this.addBottomEventLog('校准失败，未修复 Bug', 'warning');
         }
 
         submitBtn.disabled = true;
+        skipBtn.disabled = true;
         this.currentChallenge = null;
         this.currentChallengeAnswer = null;
         this.currentChallengeMeta = null;
         inputEl.value = '';
+
+        if (this.isCalibrationPageActive()) {
+            this.startCalibrationChallenge();
+        }
+    }
+
+    skipCalibrationChallenge() {
+        const submitBtn = document.getElementById('challengeSubmitBtn');
+        const skipBtn = document.getElementById('challengeSkipBtn');
+        const inputEl = document.getElementById('challengeInput');
+
+        if (!submitBtn || !skipBtn || !inputEl) return;
+        if (!this.currentChallenge) {
+            if (this.isCalibrationPageActive()) {
+                this.startCalibrationChallenge();
+            }
+            return;
+        }
+
+        const pressureRatio = this.bugSoftCapacity > 0 ? this.bugCount / this.bugSoftCapacity : 0;
+        const penalty = Math.ceil(this.skipBugPenaltyBase + Math.max(0, pressureRatio - 1) * this.skipBugPenaltyPressureScale);
+
+        const oldBug = this.bugCount;
+        this.bugCount = Math.min(this.bugHardCapacity, this.bugCount + penalty);
+        const actualPenalty = this.bugCount - oldBug;
+
+        this.calibrationStreak = 0;
+        this.lastCalibrationFix = 0;
+        this.addBottomEventLog(`跳过校准，Bug +${actualPenalty.toFixed(0)}，连胜重置`, 'warning');
+
+        submitBtn.disabled = true;
+        skipBtn.disabled = true;
+        this.currentChallenge = null;
+        this.currentChallengeAnswer = null;
+        this.currentChallengeMeta = null;
+        inputEl.value = '';
+
+        if (this.isCalibrationPageActive()) {
+            this.startCalibrationChallenge();
+        }
     }
 
     updateCalibrationUI() {

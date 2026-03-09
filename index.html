@@ -147,30 +147,20 @@
 
                         <div class="calibration-grid">
                             <div class="mini-game-card">
-                                <div class="mini-game-title">➕ 心算快答</div>
-                                <div class="mini-game-desc">基础数学计算，限时思维热身</div>
-                                <button class="build-btn" onclick="game.startCalibrationChallenge('math')">开始挑战</button>
-                            </div>
-
-                            <div class="mini-game-card">
-                                <div class="mini-game-title">🧩 神兽验证码</div>
-                                <div class="mini-game-desc">识别符号规律，模拟数据标注</div>
-                                <button class="build-btn" onclick="game.startCalibrationChallenge('captcha')">开始挑战</button>
-                            </div>
-
-                            <div class="mini-game-card">
-                                <div class="mini-game-title">♠️ 快算24</div>
-                                <div class="mini-game-desc">组合推理表达式，纠正推理链路</div>
-                                <button class="build-btn" onclick="game.startCalibrationChallenge('twentyFour')">开始挑战</button>
+                                <div class="mini-game-title">🎲 随机挑战</div>
+                                <div class="mini-game-desc">进入校准页后系统自动出题；提交或跳过后将自动切换下一题；离开校准页后暂停自动切题</div>
                             </div>
                         </div>
 
                         <div class="challenge-box">
-                            <div class="challenge-title" id="challengeTitle">请选择一个挑战开始校准</div>
+                            <div class="challenge-title" id="challengeTitle">系统将自动派发校准任务</div>
                             <div class="challenge-desc" id="challengeDescription">完成挑战后可修复 4-6 个Bug</div>
                             <div class="challenge-input-row">
                                 <input id="challengeInput" class="challenge-input" type="text" placeholder="输入答案后点击提交" />
                                 <button id="challengeSubmitBtn" class="build-btn challenge-submit-btn" onclick="game.submitCalibrationAnswer()" disabled>提交答案</button>
+                            </div>
+                            <div class="challenge-input-row">
+                                <button id="challengeSkipBtn" class="build-btn challenge-submit-btn" onclick="game.skipCalibrationChallenge()" disabled>跳过当前题目（有惩罚）</button>
                             </div>
                             <div class="challenge-hint" id="challengeHint">提示：连续答对可获得额外修复奖励</div>
                             <div class="challenge-result" id="calibrationResult">等待挑战...</div>
