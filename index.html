@@ -56,6 +56,7 @@
                 <nav class="nav">
                     <button class="nav-btn active" data-page="overview">📊 总览</button>
                     <button class="nav-btn" data-page="buildings">⚙️ 建筑</button>
+                    <button class="nav-btn" data-page="research">🧪 研发</button>
                     <button class="nav-btn" data-page="products">🤖 产品</button>
                     <button class="nav-btn" data-page="calibration">🛠 校准</button>
                 </nav>
@@ -129,7 +130,18 @@
                     </div>
                 </div>
 
-                <!-- 🤖 产品页面 -->
+                <!-- � 研发页面 -->
+                <div class="page" id="page-research">
+                    <h2>🧪 研发中心（技能树）</h2>
+                    <div class="research-summary" id="researchSummary">
+                        已解锁: 0/0 | 当前收益倍率: ×1.00
+                    </div>
+                    <div class="research-grid" id="researchContainer">
+                        <!-- 动态生成技能树 -->
+                    </div>
+                </div>
+
+                <!-- �🤖 产品页面 -->
                 <div class="page" id="page-products">
                     <h2>🤖 产品系统</h2>
                     <div class="products-grid" id="productsContainer">

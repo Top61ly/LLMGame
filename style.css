@@ -606,6 +606,116 @@ body {
     cursor: not-allowed;
 }
 
+/* 研发模块 */
+.research-summary {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    border-radius: 8px;
+    background: rgba(0, 212, 255, 0.08);
+    color: #9fdfff;
+    font-size: 13px;
+}
+
+.research-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+.research-category {
+    background: rgba(0, 212, 255, 0.04);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.research-category-title {
+    color: #00ff88;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.research-skills-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.research-skill-card {
+    background: rgba(12, 25, 44, 0.7);
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    border-radius: 8px;
+    padding: 10px;
+    display: grid;
+    gap: 4px;
+    min-height: 190px;
+}
+
+.research-skill-card.skill-unlocked {
+    border-color: rgba(0, 255, 136, 0.6);
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.18);
+}
+
+.research-skill-card.skill-just-unlocked {
+    animation: skillUnlockFlash 0.8s ease;
+}
+
+@keyframes skillUnlockFlash {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(0, 255, 136, 0);
+    }
+    35% {
+        transform: scale(1.02);
+        box-shadow: 0 0 24px rgba(0, 255, 136, 0.65);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(0, 255, 136, 0.18);
+    }
+}
+
+.research-skill-card.skill-available {
+    border-color: rgba(0, 212, 255, 0.7);
+}
+
+.research-skill-card.skill-locked,
+.research-skill-card.skill-insufficient {
+    opacity: 0.88;
+}
+
+.skill-icon {
+    font-size: 16px;
+}
+
+.skill-name {
+    color: #d7f8ff;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.skill-cost,
+.skill-effect,
+.skill-description,
+.skill-boost {
+    color: #9ab6cf;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.skill-unlock-btn {
+    margin-top: 4px;
+}
+
+@media (max-width: 1200px) {
+    .research-grid,
+    .research-skills-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* 校准模块 */
 .calibration-panel {
     display: flex;

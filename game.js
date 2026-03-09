@@ -95,6 +95,118 @@ class AIEmpireGame {
             speechAPI: { unlocked: false, developed: false, devCost: 3000000, devTime: 5400, effect: 1.2, name: '语音API' },
         };
 
+        // ========== 研发技能树系统 ==========
+        this.researchSkills = {
+            // 增长分支
+            coldStart: {
+                id: 'coldStart',
+                name: '冷启动投放',
+                category: '增长',
+                unlockCost: 50000,
+                prerequisites: [],
+                targetParam: 'playersGrowthRate',
+                modifyType: 'percent',
+                modifyValue: 0.08,
+                unlocked: false,
+                description: '通过精准投放获得初始用户增长',
+                icon: '🚀',
+            },
+            viralMarketing: {
+                id: 'viralMarketing',
+                name: '病毒式营销',
+                category: '增长',
+                unlockCost: 120000,
+                prerequisites: ['coldStart'],
+                targetParam: 'playersGrowthRate',
+                modifyType: 'percent',
+                modifyValue: 0.12,
+                unlocked: false,
+                description: '激发用户自发传播，快速扩散',
+                icon: '📢',
+            },
+            // 口碑分支
+            brandAwareness: {
+                id: 'brandAwareness',
+                name: '品牌感知优化',
+                category: '口碑',
+                unlockCost: 80000,
+                prerequisites: [],
+                targetParam: 'hypeBase',
+                modifyType: 'flat',
+                modifyValue: 0.08,
+                unlocked: false,
+                description: '提升品牌认知度与口碑传播',
+                icon: '✨',
+            },
+            publicRelations: {
+                id: 'publicRelations',
+                name: '公关策略',
+                category: '口碑',
+                unlockCost: 150000,
+                prerequisites: ['brandAwareness'],
+                targetParam: 'hypeBase',
+                modifyType: 'flat',
+                modifyValue: 0.12,
+                unlocked: false,
+                description: '专业公关团队维护品牌形象',
+                icon: '🎯',
+            },
+            // 收入分支
+            pricingExperiment: {
+                id: 'pricingExperiment',
+                name: '定价实验',
+                category: '收入',
+                unlockCost: 120000,
+                prerequisites: [],
+                targetParam: 'revenueMultiplier',
+                modifyType: 'percent',
+                modifyValue: 0.06,
+                unlocked: false,
+                description: '通过A/B测试优化定价策略',
+                icon: '💰',
+            },
+            premiumTier: {
+                id: 'premiumTier',
+                name: '高级订阅',
+                category: '收入',
+                unlockCost: 200000,
+                prerequisites: ['pricingExperiment'],
+                targetParam: 'revenueMultiplier',
+                modifyType: 'percent',
+                modifyValue: 0.10,
+                unlocked: false,
+                description: '推出高级订阅服务提升ARPU',
+                icon: '💎',
+            },
+            // 稳定分支
+            testCoverage: {
+                id: 'testCoverage',
+                name: '测试覆盖优化',
+                category: '稳定',
+                unlockCost: 60000,
+                prerequisites: [],
+                targetParam: 'bugsGenerationRate',
+                modifyType: 'percent',
+                modifyValue: -0.12,
+                unlocked: false,
+                description: '提升测试覆盖率减少Bug产生',
+                icon: '🧪',
+            },
+            codeQuality: {
+                id: 'codeQuality',
+                name: '代码质量体系',
+                category: '稳定',
+                unlockCost: 100000,
+                prerequisites: ['testCoverage'],
+                targetParam: 'bugsGenerationRate',
+                modifyType: 'percent',
+                modifyValue: -0.15,
+                unlocked: false,
+                description: '建立代码审查与质量保障体系',
+                icon: '📝',
+            },
+        };
+
         // ========== 计算缓存 ==========
         this.cachedStats = {
             deltaUsersPerSecond: 0,
@@ -361,8 +473,11 @@ class AIEmpireGame {
      * 计算Hype值的各个影响因子
      */
     calculateHypeFactors() {
+        // 应用技能修正到Hype基础值
+        const modifiedHypeBase = this.applySkillModifiers('hypeBase', this.hypeBase);
+        
         const factors = {
-            base: this.hypeBase,
+            base: modifiedHypeBase,
             lowLoadBonus: 0,
             pingImpact: 0,
             bugImpact: 0,
@@ -423,7 +538,8 @@ class AIEmpireGame {
             return 0;
         }
 
-        const baseRate = this.bugsGenerationRate;
+        // 应用技能修正
+        const baseRate = this.applySkillModifiers('bugsGenerationRate', this.bugsGenerationRate);
         const userScaling = Math.log10(Math.max(1, this.totalUsers)) * this.bugsUserScaling;
         const loadMultiplier = this.bugsLoadBase + loadRate * this.bugsLoadScaling;
         const softCapResistance = 1 / (1 + Math.pow(this.bugCount / this.bugSoftCapacity, 3));
@@ -471,7 +587,10 @@ class AIEmpireGame {
         const marketResistance = this.calculateMarketResistance();
         const loadDecay = this.calculateLoadDecay();
 
-        let deltaUsers = this.playersGrowthRate * this.hypeValue * marketResistance * loadDecay;
+        // 应用技能修正
+        const modifiedGrowthRate = this.applySkillModifiers('playersGrowthRate', this.playersGrowthRate);
+
+        let deltaUsers = modifiedGrowthRate * this.hypeValue * marketResistance * loadDecay;
 
         // 如果增长后超过系统容量，限制为差值
         const remainingCapacity = this.systemCapacity - this.currentLoad;
@@ -492,10 +611,14 @@ class AIEmpireGame {
     calculateProfitPerSecond() {
         const deltaUsers = this.calculateDeltaUsersPerSecond();
 
-        const profit = deltaUsers * this.pricePerCopy * this.revenueMultiplier;
+        // 应用技能修正
+        const modifiedPrice = this.applySkillModifiers('pricePerCopy', this.pricePerCopy);
+        const modifiedRevMult = this.applySkillModifiers('revenueMultiplier', this.revenueMultiplier);
+
+        const profit = deltaUsers * modifiedPrice * modifiedRevMult;
 
         this.cachedStats.profitPerSecond = profit;
-        this.cachedStats.arpu = this.pricePerCopy * this.revenueMultiplier;
+        this.cachedStats.arpu = modifiedPrice * modifiedRevMult;
 
         return profit;
     }
@@ -665,6 +788,152 @@ class AIEmpireGame {
         }
     }
 
+    // ========== 研发技能树系统 ==========
+
+    /**
+     * 解锁技能
+     */
+    unlockSkill(skillId) {
+        const skill = this.researchSkills[skillId];
+        
+        if (!skill) {
+            console.error(`技能 ${skillId} 不存在`);
+            return;
+        }
+
+        if (skill.unlocked) {
+            const message = `${skill.name} 已解锁`;
+            this.addBottomEventLog(message, 'warning');
+            return;
+        }
+
+        // 检查前置条件
+        for (const prereqId of skill.prerequisites) {
+            if (!this.researchSkills[prereqId].unlocked) {
+                const message = `需要先解锁前置技能：${this.researchSkills[prereqId].name}`;
+                this.addBottomEventLog(message, 'warning');
+                return;
+            }
+        }
+
+        // 检查资金
+        if (this.money < skill.unlockCost) {
+            const shortage = skill.unlockCost - this.money;
+            const message = `资金不足，还差 $${this.formatNumber(shortage)}`;
+            this.addBottomEventLog(message, 'warning');
+            return;
+        }
+
+        // 扣除资金并解锁
+        this.money -= skill.unlockCost;
+        skill.unlocked = true;
+
+        const message = `✓ 解锁技能：${skill.name} | 参数：${skill.targetParam} ${skill.modifyType === 'percent' ? (skill.modifyValue >= 0 ? '+' : '') + (skill.modifyValue * 100).toFixed(0) + '%' : (skill.modifyValue >= 0 ? '+' : '') + skill.modifyValue}`;
+        this.addBottomEventLog(message, 'success');
+
+        // 重新渲染研发面板
+        this.renderResearch();
+        const unlockedCard = document.querySelector(`.research-skill-card[data-skill-id="${skillId}"]`);
+        if (unlockedCard) {
+            unlockedCard.classList.add('skill-just-unlocked');
+            setTimeout(() => unlockedCard.classList.remove('skill-just-unlocked'), 800);
+        }
+        // 立即刷新全局UI，保证购买后的数值立刻可见
+        this.updateUI();
+    }
+
+    calculateResearchMetrics() {
+        const totalSkills = Object.keys(this.researchSkills).length;
+        const unlockedSkills = Object.values(this.researchSkills).filter((s) => s.unlocked).length;
+        const totalInvestment = Object.values(this.researchSkills)
+            .filter((s) => s.unlocked)
+            .reduce((sum, s) => sum + s.unlockCost, 0);
+
+        const modifiers = this.getSkillModifiers();
+        const growthMultiplier = 1 + (modifiers.playersGrowthRate?.percent || 0);
+        const priceMultiplier = 1 + (modifiers.pricePerCopy?.percent || 0);
+        const revenueMultiplier = 1 + (modifiers.revenueMultiplier?.percent || 0);
+        const incomeMultiplier = growthMultiplier * priceMultiplier * revenueMultiplier;
+
+        return {
+            totalSkills,
+            unlockedSkills,
+            totalInvestment,
+            incomeMultiplier,
+        };
+    }
+
+    /**
+     * 获取技能实际应用的参数修正
+     */
+    getSkillModifiers() {
+        const modifiers = {
+            playersGrowthRate: { percent: 0, flat: 0 },
+            hypeBase: { percent: 0, flat: 0 },
+            revenueMultiplier: { percent: 0, flat: 0 },
+            pricePerCopy: { percent: 0, flat: 0 },
+            bugsGenerationRate: { percent: 0, flat: 0 },
+        };
+
+        for (const skillId in this.researchSkills) {
+            const skill = this.researchSkills[skillId];
+            if (skill.unlocked) {
+                const param = skill.targetParam;
+                if (modifiers[param]) {
+                    if (skill.modifyType === 'percent') {
+                        modifiers[param].percent += skill.modifyValue;
+                    } else if (skill.modifyType === 'flat') {
+                        modifiers[param].flat += skill.modifyValue;
+                    }
+                }
+            }
+        }
+
+        return modifiers;
+    }
+
+    /**
+     * 应用技能修正到参数
+     */
+    applySkillModifiers(param, baseValue) {
+        const modifiers = this.getSkillModifiers();
+        
+        if (!modifiers[param]) {
+            return baseValue;
+        }
+
+        let value = baseValue;
+        
+        // 先应用百分比修正
+        value = value * (1 + modifiers[param].percent);
+        
+        // 再应用固定值修正
+        value = value + modifiers[param].flat;
+
+        return value;
+    }
+
+    /**
+     * 计算收益提升倍率（用于UI展示）
+     */
+    calculateIncomeBoost(skillId) {
+        const skill = this.researchSkills[skillId];
+        if (!skill || skill.unlocked) {
+            return 1.0;
+        }
+
+        // 模拟解锁后的收益
+        const currentProfit = this.calculateProfitPerSecond();
+        
+        // 临时解锁技能
+        skill.unlocked = true;
+        const newProfit = this.calculateProfitPerSecond();
+        skill.unlocked = false;
+
+        const boost = currentProfit > 0 ? newProfit / currentProfit : 1.0;
+        return boost;
+    }
+
     // ========== UI系统 ==========
 
     initUI() {
@@ -676,6 +945,7 @@ class AIEmpireGame {
         this.setupNavigation();
         this.renderBuildings();
         this.renderProducts();
+        this.renderResearch();
 
         const calibrationInput = document.getElementById('challengeInput');
         if (calibrationInput) {
@@ -833,6 +1103,125 @@ class AIEmpireGame {
             `;
             container.appendChild(card);
         }
+    }
+
+    renderResearch() {
+        const container = document.getElementById('researchContainer');
+        const summary = document.getElementById('researchSummary');
+        
+        if (!container || !summary) return;
+        
+        container.innerHTML = '';
+        
+        const metrics = this.calculateResearchMetrics();
+        summary.textContent = `已解锁: ${metrics.unlockedSkills}/${metrics.totalSkills} | 总研发投入: $${this.formatNumber(metrics.totalInvestment)} | 累计收益倍率: ×${metrics.incomeMultiplier.toFixed(2)}`;
+        
+        // 按分支分组渲染
+        const categories = ['增长', '口碑', '收入', '稳定'];
+        
+        categories.forEach(category => {
+            const categorySkills = Object.values(this.researchSkills).filter(s => s.category === category);
+            
+            if (categorySkills.length === 0) return;
+            
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'research-category';
+            categoryDiv.innerHTML = `<h3 class="research-category-title">${category}分支</h3>`;
+            
+            const skillsGrid = document.createElement('div');
+            skillsGrid.className = 'research-skills-grid';
+            
+            categorySkills.forEach(skill => {
+                const prereqsMet = skill.prerequisites.every(prereqId => this.researchSkills[prereqId].unlocked);
+                const canUnlock = !skill.unlocked && prereqsMet && this.money >= skill.unlockCost;
+                const locked = !skill.unlocked && !prereqsMet;
+                
+                let statusText = '';
+                let statusClass = '';
+                if (skill.unlocked) {
+                    statusText = '✓ 已解锁';
+                    statusClass = 'skill-unlocked';
+                } else if (locked) {
+                    statusText = '🔒 前置未达';
+                    statusClass = 'skill-locked';
+                } else if (canUnlock) {
+                    statusText = '可解锁';
+                    statusClass = 'skill-available';
+                } else {
+                    statusText = '资金不足';
+                    statusClass = 'skill-insufficient';
+                }
+                
+                // 预计提升
+                const boost = skill.unlocked ? 1.0 : this.calculateIncomeBoost(skill.id);
+                const boostPct = ((boost - 1) * 100).toFixed(1);
+                
+                const card = document.createElement('div');
+                card.className = `research-skill-card ${statusClass}`;
+                card.dataset.skillId = skill.id;
+                card.innerHTML = `
+                    <div class="skill-icon">${skill.icon}</div>
+                    <div class="skill-name">${skill.name}</div>
+                    <div class="skill-cost">$${this.formatNumber(skill.unlockCost)}</div>
+                    <div class="skill-effect">${skill.targetParam}: ${skill.modifyType === 'percent' ? (skill.modifyValue >= 0 ? '+' : '') + (skill.modifyValue * 100).toFixed(0) + '%' : (skill.modifyValue >= 0 ? '+' : '') + skill.modifyValue}</div>
+                    <div class="skill-description">${skill.description}</div>
+                    <div class="skill-boost">预计提升: +${boostPct}%</div>
+                    <button class="build-btn skill-unlock-btn" data-skill-id="${skill.id}" onclick="game.unlockSkill('${skill.id}')" 
+                        ${skill.unlocked || !prereqsMet || this.money < skill.unlockCost ? 'disabled' : ''}>
+                        ${statusText}
+                    </button>
+                `;
+                skillsGrid.appendChild(card);
+            });
+            
+            categoryDiv.appendChild(skillsGrid);
+            container.appendChild(categoryDiv);
+        });
+    }
+
+    updateResearchButtonStates() {
+        const container = document.getElementById('researchContainer');
+        const summary = document.getElementById('researchSummary');
+        if (!container || !summary) return;
+
+        const metrics = this.calculateResearchMetrics();
+        summary.textContent = `已解锁: ${metrics.unlockedSkills}/${metrics.totalSkills} | 总研发投入: $${this.formatNumber(metrics.totalInvestment)} | 累计收益倍率: ×${metrics.incomeMultiplier.toFixed(2)}`;
+
+        const buttons = container.querySelectorAll('.skill-unlock-btn');
+        buttons.forEach((btn) => {
+            const skillId = btn.dataset.skillId;
+            const skill = this.researchSkills[skillId];
+            if (!skill) return;
+
+            const prereqsMet = skill.prerequisites.every((prereqId) => this.researchSkills[prereqId].unlocked);
+            const canUnlock = !skill.unlocked && prereqsMet && this.money >= skill.unlockCost;
+            const locked = !skill.unlocked && !prereqsMet;
+
+            let statusText = '';
+            let statusClass = '';
+            if (skill.unlocked) {
+                statusText = '✓ 已解锁';
+                statusClass = 'skill-unlocked';
+            } else if (locked) {
+                statusText = '🔒 前置未达';
+                statusClass = 'skill-locked';
+            } else if (canUnlock) {
+                statusText = '可解锁';
+                statusClass = 'skill-available';
+            } else {
+                statusText = '资金不足';
+                statusClass = 'skill-insufficient';
+            }
+
+            btn.disabled = !canUnlock;
+            btn.textContent = statusText;
+
+            const card = btn.closest('.research-skill-card');
+            if (card) {
+                card.classList.remove('skill-unlocked', 'skill-locked', 'skill-available', 'skill-insufficient');
+                card.classList.add(statusClass);
+            }
+        });
     }
 
     // ========== 校准修复系统 ==========
@@ -1137,9 +1526,8 @@ class AIEmpireGame {
         document.getElementById('rightUsers').textContent = `${this.formatNumber(Math.floor(this.totalUsers))}`;
         document.getElementById('rightGrowth').textContent = `+${this.formatNumber(this.cachedStats.deltaUsersPerSecond)}/秒`;
         
-        // 计算ARPU (每用户收入 = Price × RevMult)
-        const arpu = this.pricePerCopy * this.revenueMultiplier;
-        document.getElementById('rightArpu').textContent = `$${arpu.toFixed(2)}`;
+        // 右侧ARPU与核心收益计算保持一致（包含研发修正）
+        document.getElementById('rightArpu').textContent = `$${this.cachedStats.arpu.toFixed(2)}`;
         
         document.getElementById('rightProfit').textContent = `+$${this.formatNumber(this.cachedStats.profitPerSecond)}/秒`;
         
@@ -1194,6 +1582,9 @@ class AIEmpireGame {
 
         // 更新校准面板
         this.updateCalibrationUI();
+
+        // 研发按钮状态依赖实时资金和前置条件，做增量刷新避免重建DOM打断点击
+        this.updateResearchButtonStates();
     }
 
     addLog(message, type = 'info') {
