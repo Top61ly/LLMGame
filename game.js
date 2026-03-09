@@ -90,10 +90,59 @@ class AIEmpireGame {
 
         // ========== 产品系统 ==========
         this.products = {
-            textAPI: { unlocked: true, developed: false, devCost: 1000000, devTime: 3600, effect: 1.0, name: '文本API' },
-            imageAPI: { unlocked: false, developed: false, devCost: 5000000, devTime: 7200, effect: 1.5, name: '图像API' },
-            speechAPI: { unlocked: false, developed: false, devCost: 3000000, devTime: 5400, effect: 1.2, name: '语音API' },
+            // 文本产品线
+            textAPI: { 
+                unlocked: true, developed: false, isDeveloping: false,
+                devCost: 1000000, devTime: 3600, 
+                effect: 1.0, name: '文本API基础版', emoji: '📄',
+                prerequisites: [], devProgress: 0, devStartTime: 0
+            },
+            gptMedium: { 
+                unlocked: false, developed: false, isDeveloping: false,
+                devCost: 100000000, devTime: 43200,
+                effect: 5.0, name: 'GPT-Medium', emoji: '🤖',
+                prerequisites: ['textAPI'], devProgress: 0, devStartTime: 0
+            },
+            gptLarge: { 
+                unlocked: false, developed: false, isDeveloping: false,
+                devCost: 500000000, devTime: 172800,
+                effect: 15.0, name: 'GPT-Large', emoji: '🧠',
+                prerequisites: ['gptMedium'], devProgress: 0, devStartTime: 0
+            },
+            
+            // 图像产品线
+            imageAPI: { 
+                unlocked: true, developed: false, isDeveloping: false,
+                devCost: 5000000, devTime: 7200, 
+                effect: 1.5, name: '图像API基础版', emoji: '🖼️',
+                prerequisites: [], devProgress: 0, devStartTime: 0
+            },
+            dalleL: { 
+                unlocked: false, developed: false, isDeveloping: false,
+                devCost: 500000000, devTime: 86400,
+                effect: 8.0, name: 'DALL-E Large', emoji: '🎨',
+                prerequisites: ['imageAPI'], devProgress: 0, devStartTime: 0
+            },
+            
+            // 语音产品线
+            speechAPI: { 
+                unlocked: true, developed: false, isDeveloping: false,
+                devCost: 3000000, devTime: 5400, 
+                effect: 1.2, name: '语音API基础版', emoji: '🎤',
+                prerequisites: [], devProgress: 0, devStartTime: 0
+            },
+            
+            // 综合产品
+            multimodal: { 
+                unlocked: false, developed: false, isDeveloping: false,
+                devCost: 10000000000, devTime: 360000,
+                effect: 50.0, name: '多模态引擎', emoji: '📱',
+                prerequisites: ['textAPI', 'imageAPI', 'speechAPI'], devProgress: 0, devStartTime: 0
+            },
         };
+        
+        // 当前正在研发的产品（串行研发）
+        this.currentDevProduct = null;
 
         // ========== 研发技能树系统 ==========
         this.researchSkills = {
@@ -409,6 +458,7 @@ class AIEmpireGame {
             calibrationStreak: this.calibrationStreak,
             buildings: this.buildings,
             products: this.products,
+            currentDevProduct: this.currentDevProduct,
         };
         localStorage.setItem('aiEmpireGameSave', JSON.stringify(gameData));
     }
@@ -430,6 +480,7 @@ class AIEmpireGame {
             this.bugCount = data.bugCount || 0;
             this.buildings = data.buildings;
             this.products = data.products;
+            this.currentDevProduct = data.currentDevProduct || null;
 
             // 存档兼容：缺失时使用默认值
             this.calibrationStreak = data.calibrationStreak || 0;
@@ -673,6 +724,9 @@ class AIEmpireGame {
         // 更新游戏时间
         this.gameTime += this.deltaTime;
 
+        // 更新产品研发进度
+        this.updateProductDevelopment();
+
         // 检查解锁条件
         this.checkUnlocks();
 
@@ -697,11 +751,25 @@ class AIEmpireGame {
             this.buildings.quantum.unlocked = true;
         }
 
-        // 产品解锁
+        // 产品解锁（基于金钱或前置产品完成）
         if (this.money >= 1000000) {
             this.products.textAPI.unlocked = true;
             this.products.imageAPI.unlocked = true;
             this.products.speechAPI.unlocked = true;
+        }
+
+        // 高级产品解锁（基于前置产品发布）
+        if (this.products.textAPI.developed) {
+            this.products.gptMedium.unlocked = true;
+        }
+        if (this.products.gptMedium.developed) {
+            this.products.gptLarge.unlocked = true;
+        }
+        if (this.products.imageAPI.developed) {
+            this.products.dalleL.unlocked = true;
+        }
+        if (this.products.textAPI.developed && this.products.imageAPI.developed && this.products.speechAPI.developed) {
+            this.products.multimodal.unlocked = true;
         }
     }
 
@@ -751,10 +819,41 @@ class AIEmpireGame {
     // ========== 产品系统 ==========
 
     /**
-     * 发布产品
+     * 检查产品的前置依赖是否满足
      */
-    publishProduct(productKey) {
+    checkProductDependencies(productKey) {
         const product = this.products[productKey];
+        if (!product.prerequisites || product.prerequisites.length === 0) {
+            return true;
+        }
+
+        for (const prereq of product.prerequisites) {
+            if (!this.products[prereq].developed) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 获取前置依赖的名称列表（用于显示）
+     */
+    getProductDependenciesDisplay(productKey) {
+        const product = this.products[productKey];
+        if (!product.prerequisites || product.prerequisites.length === 0) {
+            return null;
+        }
+
+        const names = product.prerequisites.map(key => this.products[key].name);
+        return names.join('、');
+    }
+
+    /**
+     * 开始研发产品
+     */
+    startDevelopment(productKey) {
+        const product = this.products[productKey];
+        
         if (!product.unlocked) {
             const message = `${product.name} 未解锁`;
             this.addBottomEventLog(message, 'warning');
@@ -767,9 +866,75 @@ class AIEmpireGame {
             return;
         }
 
-        if (this.money >= product.devCost) {
-            this.money -= product.devCost;
+        if (product.isDeveloping) {
+            const message = `${product.name} 正在研发中`;
+            this.addBottomEventLog(message, 'warning');
+            return;
+        }
+
+        // 检查前置依赖
+        if (!this.checkProductDependencies(productKey)) {
+            const deps = this.getProductDependenciesDisplay(productKey);
+            const message = `无法研发 ${product.name}，需要先完成：${deps}`;
+            this.addBottomEventLog(message, 'warning');
+            return;
+        }
+
+        // 检查资金
+        if (this.money < product.devCost) {
+            const shortage = product.devCost - this.money;
+            const message = `资金不足，无法研发 ${product.name}，还差 $${this.formatNumber(shortage)}`;
+            this.addBottomEventLog(message, 'warning');
+            return;
+        }
+
+        // 如果有其他产品正在研发，中断之前的研发
+        if (this.currentDevProduct) {
+            const prevProduct = this.products[this.currentDevProduct];
+            prevProduct.isDeveloping = false;
+            prevProduct.devProgress = 0;
+            prevProduct.devStartTime = 0;
+        }
+
+        // 扣除资金并开始研发
+        this.money -= product.devCost;
+        product.isDeveloping = true;
+        product.devProgress = 0;
+        product.devStartTime = this.gameTime;
+        this.currentDevProduct = productKey;
+
+        const message = `🔬 开始研发 ${product.name}，预计需要 ${this.formatProductTime(product.devTime)}`;
+        this.addBottomEventLog(message, 'success');
+
+        // 重新渲染产品卡片
+        this.renderProducts();
+    }
+
+    /**
+     * 更新产品研发进度
+     */
+    updateProductDevelopment() {
+        if (!this.currentDevProduct) {
+            return;
+        }
+
+        const product = this.products[this.currentDevProduct];
+        if (!product.isDeveloping) {
+            this.currentDevProduct = null;
+            return;
+        }
+
+        // 计算研发进度
+        const elapsedTime = this.gameTime - product.devStartTime;
+        product.devProgress = Math.min(1.0, elapsedTime / product.devTime);
+
+        // 研发完成
+        if (product.devProgress >= 1.0) {
             product.developed = true;
+            product.isDeveloping = false;
+            product.devProgress = 0;
+            product.devStartTime = 0;
+            this.currentDevProduct = null;
 
             // 扩大市场容量
             this.marketCapacity += 50000;
@@ -777,15 +942,22 @@ class AIEmpireGame {
             // 提升收入乘数
             this.revenueMultiplier *= product.effect;
 
-            const message = `发布 ${product.name}！市场容量 +50K，收入乘数 ×${product.effect}`;
+            const message = `✅ 产品发布：${product.name}！市场容量 +50K，收入乘数 ×${product.effect}`;
             this.addBottomEventLog(message, 'success');
 
             // 重新渲染产品卡片
             this.renderProducts();
-        } else {
-            const message = `资金不足，无法开发 ${product.name}`;
-            this.addBottomEventLog(message, 'warning');
         }
+    }
+
+    /**
+     * 格式化产品开发时间显示
+     */
+    formatProductTime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${hours}h${minutes}m${secs}s`;
     }
 
     // ========== 研发技能树系统 ==========
@@ -1081,27 +1253,147 @@ class AIEmpireGame {
 
     renderProducts() {
         const container = document.getElementById('productsContainer');
+        if (!container) return;
         container.innerHTML = '';
 
-        for (const key in this.products) {
-            const product = this.products[key];
-            if (!product.unlocked) continue;
+        // 已发布产品
+        const publishedProducts = Object.entries(this.products).filter(([_, p]) => p.developed);
+        if (publishedProducts.length > 0) {
+            const publishedSection = document.createElement('div');
+            publishedSection.className = 'products-section';
+            publishedSection.innerHTML = '<h3 class="section-title">✅ 已发布产品</h3>';
+            
+            const publishedContainer = document.createElement('div');
+            publishedContainer.className = 'products-list';
+            
+            publishedProducts.forEach(([key, product]) => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-header">
+                        <span class="product-emoji">${product.emoji}</span>
+                        <div class="product-title">${product.name}</div>
+                    </div>
+                    <div class="product-stats">
+                        <div>📊 质量倍率: ×${product.effect}</div>
+                    </div>
+                `;
+                publishedContainer.appendChild(card);
+            });
+            
+            publishedSection.appendChild(publishedContainer);
+            container.appendChild(publishedSection);
+        }
 
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            card.innerHTML = `
-                <div class="building-name">${product.name}</div>
-                <div class="building-stats">
-                    <div>${product.developed ? '✅ 已发布' : '❌ 未发布'}</div>
-                    <div>开发成本: $${this.formatNumber(product.devCost)}</div>
-                    <div>收入倍率: ×${product.effect}</div>
-                </div>
-                <button class="build-btn" onclick="game.publishProduct('${key}')" 
-                    ${product.developed || this.money < product.devCost ? 'disabled' : ''}>
-                    ${product.developed ? '已发布' : '发布'}
-                </button>
-            `;
-            container.appendChild(card);
+        // 研发中产品
+        const developingProducts = Object.entries(this.products).filter(([_, p]) => p.isDeveloping);
+        if (developingProducts.length > 0) {
+            const developingSection = document.createElement('div');
+            developingSection.className = 'products-section';
+            
+            const timeRemaining = developingProducts[0][1].devTime - (this.gameTime - developingProducts[0][1].devStartTime);
+            developingSection.innerHTML = `<h3 class="section-title">⏳ 研发中 (剩余时间: ${this.formatProductTime(timeRemaining)})</h3>`;
+            
+            const developingContainer = document.createElement('div');
+            developingContainer.className = 'products-list';
+            
+            developingProducts.forEach(([key, product]) => {
+                const elapsedTime = this.gameTime - product.devStartTime;
+                const progressPercent = (product.devProgress * 100).toFixed(0);
+                const consumedCost = product.devCost * product.devProgress;
+                
+                const card = document.createElement('div');
+                card.className = 'product-card developing';
+                card.innerHTML = `
+                    <div class="product-header">
+                        <span class="product-emoji">${product.emoji}</span>
+                        <div class="product-title">${product.name}</div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: ${progressPercent}%"></div>
+                        </div>
+                        <div class="progress-text">${progressPercent}% - $${this.formatNumber(consumedCost)}/$${this.formatNumber(product.devCost)}</div>
+                    </div>
+                `;
+                developingContainer.appendChild(card);
+            });
+            
+            developingSection.appendChild(developingContainer);
+            container.appendChild(developingSection);
+        }
+
+        // 可研发产品
+        const availableProducts = Object.entries(this.products).filter(([_, p]) => 
+            p.unlocked && !p.developed && !p.isDeveloping
+        );
+        if (availableProducts.length > 0) {
+            const availableSection = document.createElement('div');
+            availableSection.className = 'products-section';
+            availableSection.innerHTML = '<h3 class="section-title">🔬 可研发产品</h3>';
+            
+            const availableContainer = document.createElement('div');
+            availableContainer.className = 'products-list';
+            
+            availableProducts.forEach(([key, product]) => {
+                const canStart = this.checkProductDependencies(key) && this.money >= product.devCost;
+                const depsDisplay = this.getProductDependenciesDisplay(key);
+                
+                const card = document.createElement('div');
+                card.className = `product-card${!canStart ? ' locked' : ''}`;
+                card.innerHTML = `
+                    <div class="product-header">
+                        <span class="product-emoji">${product.emoji}</span>
+                        <div class="product-title">${product.name}</div>
+                    </div>
+                    <div class="product-stats">
+                        <div>💰 成本: $${this.formatNumber(product.devCost)}</div>
+                        <div>⏱️ 时间: ${this.formatProductTime(product.devTime)}</div>
+                        ${depsDisplay ? `<div class="product-deps">📋 前置: ${depsDisplay}</div>` : '<div class="product-deps">📋 前置: 无</div>'}
+                    </div>
+                    <button class="build-btn" onclick="game.startDevelopment('${key}')" 
+                        ${!canStart ? 'disabled' : ''}>
+                        ${!this.checkProductDependencies(key) ? '前置未完成' : this.money < product.devCost ? '资金不足' : '开始研发'}
+                    </button>
+                `;
+                availableContainer.appendChild(card);
+            });
+            
+            availableSection.appendChild(availableContainer);
+            container.appendChild(availableSection);
+        }
+
+        // 未解锁产品提示
+        const lockedProducts = Object.entries(this.products).filter(([_, p]) => !p.unlocked);
+        if (lockedProducts.length > 0) {
+            const lockedSection = document.createElement('div');
+            lockedSection.className = 'products-section';
+            lockedSection.innerHTML = '<h3 class="section-title">🔒 未解锁产品</h3>';
+            
+            const lockedContainer = document.createElement('div');
+            lockedContainer.className = 'products-list';
+            
+            lockedProducts.forEach(([key, product]) => {
+                const depsDisplay = this.getProductDependenciesDisplay(key);
+                
+                const card = document.createElement('div');
+                card.className = 'product-card locked';
+                card.innerHTML = `
+                    <div class="product-header">
+                        <span class="product-emoji">🔒</span>
+                        <div class="product-title">${product.name}</div>
+                    </div>
+                    <div class="product-stats">
+                        <div>💰 成本: $${this.formatNumber(product.devCost)}</div>
+                        <div>⏱️ 时间: ${this.formatProductTime(product.devTime)}</div>
+                        ${depsDisplay ? `<div class="product-deps">📋 前置: ${depsDisplay}</div>` : ''}
+                    </div>
+                `;
+                lockedContainer.appendChild(card);
+            });
+            
+            lockedSection.appendChild(lockedContainer);
+            container.appendChild(lockedSection);
         }
     }
 
