@@ -91,51 +91,51 @@ class AIEmpireGame {
         // ========== 产品系统 ==========
         this.products = {
             // 文本产品线
-            textAPI: { 
+            textAPI: {
                 unlocked: true, developed: false, isDeveloping: false,
-                devCost: 1000000, devTime: 3600, 
-                effect: 1.0, name: '文本API基础版', emoji: '📄',
+                devCost: 1000000, devTime: 60,
+                effect: 1.5, name: '文本API基础版', emoji: '📄',
                 prerequisites: [], devProgress: 0, devStartTime: 0
             },
-            gptMedium: { 
+            gptMedium: {
                 unlocked: false, developed: false, isDeveloping: false,
-                devCost: 100000000, devTime: 43200,
+                devCost: 100000000, devTime: 120,
                 effect: 5.0, name: 'GPT-Medium', emoji: '🤖',
                 prerequisites: ['textAPI'], devProgress: 0, devStartTime: 0
             },
-            gptLarge: { 
+            gptLarge: {
                 unlocked: false, developed: false, isDeveloping: false,
-                devCost: 500000000, devTime: 172800,
+                devCost: 500000000, devTime: 180,
                 effect: 15.0, name: 'GPT-Large', emoji: '🧠',
                 prerequisites: ['gptMedium'], devProgress: 0, devStartTime: 0
             },
-            
+
             // 图像产品线
-            imageAPI: { 
+            imageAPI: {
                 unlocked: true, developed: false, isDeveloping: false,
-                devCost: 5000000, devTime: 7200, 
+                devCost: 5000000, devTime: 90,
                 effect: 1.5, name: '图像API基础版', emoji: '🖼️',
                 prerequisites: [], devProgress: 0, devStartTime: 0
             },
-            dalleL: { 
+            dalleL: {
                 unlocked: false, developed: false, isDeveloping: false,
-                devCost: 500000000, devTime: 86400,
+                devCost: 500000000, devTime: 150,
                 effect: 8.0, name: 'DALL-E Large', emoji: '🎨',
                 prerequisites: ['imageAPI'], devProgress: 0, devStartTime: 0
             },
-            
+
             // 语音产品线
-            speechAPI: { 
+            speechAPI: {
                 unlocked: true, developed: false, isDeveloping: false,
-                devCost: 3000000, devTime: 5400, 
+                devCost: 3000000, devTime: 75,
                 effect: 1.2, name: '语音API基础版', emoji: '🎤',
                 prerequisites: [], devProgress: 0, devStartTime: 0
             },
-            
+
             // 综合产品
-            multimodal: { 
+            multimodal: {
                 unlocked: false, developed: false, isDeveloping: false,
-                devCost: 10000000000, devTime: 360000,
+                devCost: 10000000000, devTime: 240,
                 effect: 50.0, name: '多模态引擎', emoji: '📱',
                 prerequisites: ['textAPI', 'imageAPI', 'speechAPI'], devProgress: 0, devStartTime: 0
             },
