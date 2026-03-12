@@ -292,6 +292,12 @@ class AIEmpireGame {
         // ========== 事件日志 ==========
         this.eventLogs = ['游戏已启动'];
 
+        // ========== 快捷操作配置（底部右侧） ==========
+        this.quickOps = {
+            enabled: true,
+            gpuPurchaseCount: 1,
+        };
+
         this.initGame();
     }
 
@@ -368,6 +374,51 @@ class AIEmpireGame {
 
         // 默认显示日志
         this.switchBottomPanel('logs');
+
+        // 初始化右侧快捷操作按钮（仅保留GPU购买）
+        this.initQuickOps();
+    }
+
+    initQuickOps() {
+        if (!this.quickOps.enabled) return;
+
+        const quickBuyGpuBtn = document.getElementById('quickBuyGpuBtn');
+        if (!quickBuyGpuBtn) return;
+
+        quickBuyGpuBtn.addEventListener('click', () => {
+            this.buyGpuFromQuickOps();
+        });
+
+        this.updateQuickOpsUI();
+    }
+
+    buyGpuFromQuickOps() {
+        const purchaseCount = Math.max(1, Math.floor(this.quickOps.gpuPurchaseCount || 1));
+        const beforeCount = this.buildings.gpu.count;
+        const nextCost = this.calculateBuildingCost('gpu');
+
+        if (this.money < nextCost) {
+            const shortage = nextCost - this.money;
+            this.addBottomEventLog(`GPU 快购失败：资金不足，还差 $${this.formatNumber(shortage)}`, 'warning');
+            return;
+        }
+
+        this.buyBuilding('gpu', purchaseCount);
+
+        if (this.buildings.gpu.count > beforeCount) {
+            this.updateUI();
+        }
+    }
+
+    updateQuickOpsUI() {
+        const quickBuyGpuBtn = document.getElementById('quickBuyGpuBtn');
+        const quickBuyGpuCost = document.getElementById('quickBuyGpuCost');
+
+        if (!quickBuyGpuBtn || !quickBuyGpuCost) return;
+
+        const nextCost = this.calculateBuildingCost('gpu');
+        quickBuyGpuCost.textContent = `下一个成本: $${this.formatNumber(nextCost)}`;
+        quickBuyGpuBtn.disabled = this.money < nextCost;
     }
 
     switchBottomPanel(panelName) {
@@ -1902,6 +1953,9 @@ class AIEmpireGame {
                 }
             }
         }
+
+        // 更新右侧快捷购买按钮状态
+        this.updateQuickOpsUI();
 
         // 更新校准面板
         this.updateCalibrationUI();

@@ -1074,8 +1074,17 @@ body {
 
 .bottom-content {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 10px 15px;
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(260px, 3fr);
+    gap: 12px;
+}
+
+.bottom-left-content {
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
 }
 
 .bottom-panel-content {
@@ -1087,6 +1096,101 @@ body {
 
 .bottom-panel-content.active {
     display: block;
+}
+
+.bottom-quickops {
+    height: 100%;
+    border-left: 1px solid rgba(0, 212, 255, 0.35);
+    padding-left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(12, 20, 36, 0.45) 0%, rgba(16, 30, 42, 0.35) 100%);
+}
+
+.quickops-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.quickops-header h3 {
+    margin: 0;
+    font-size: 13px;
+    color: #00ff88;
+    letter-spacing: 0.3px;
+}
+
+.quickops-badge {
+    font-size: 10px;
+    color: #7fdfff;
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    border-radius: 999px;
+    padding: 1px 8px;
+    background: rgba(0, 212, 255, 0.08);
+}
+
+.quickops-desc {
+    margin: 0;
+    font-size: 11px;
+    color: #7fa9ba;
+    line-height: 1.4;
+}
+
+.quickops-grid {
+    margin-top: 4px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.quickop-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 6px;
+    background: rgba(0, 212, 255, 0.06);
+    color: #84c6df;
+    cursor: pointer;
+    opacity: 1;
+    transition: all 0.2s ease;
+}
+
+.quickop-btn:hover {
+    border-color: rgba(0, 212, 255, 0.7);
+    background: rgba(0, 212, 255, 0.14);
+    transform: translateY(-1px);
+}
+
+.quickop-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
+}
+
+.quickop-btn.quickop-btn-gpu {
+    border-color: rgba(0, 255, 136, 0.45);
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.12) 0%, rgba(0, 212, 255, 0.1) 100%);
+}
+
+.quickop-btn.quickop-btn-gpu:hover {
+    border-color: rgba(0, 255, 136, 0.8);
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.25);
+}
+
+.quickop-label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #a8dff1;
+}
+
+.quickop-meta {
+    font-size: 10px;
+    color: #6b91a0;
 }
 
 @keyframes slideIn {
@@ -1498,6 +1602,18 @@ body {
 }
 
 @media (max-width: 768px) {
+    .bottom-content {
+        grid-template-columns: 1fr;
+        overflow-y: auto;
+    }
+
+    .bottom-quickops {
+        border-left: none;
+        border-top: 1px solid rgba(0, 212, 255, 0.35);
+        padding-left: 0;
+        padding-top: 10px;
+    }
+
     .challenge-box {
         width: 320px;
         height: 320px;
