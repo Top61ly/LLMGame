@@ -6,7 +6,7 @@
 class AIEmpireGame {
     constructor() {
         // ========== 游戏状态 ==========
-        this.money = 10000; // 初始资金
+        this.money = 1000000; // 初始资金
         this.totalUsers = 0; // 总用户数
         this.gameTime = 0; // 游戏时间（秒）
         this.deltaTime = 0; // 帧间隔
@@ -951,6 +951,36 @@ class AIEmpireGame {
     }
 
     /**
+     * 更新研发进度条UI
+     */
+    updateDevelopmentProgress() {
+        if (!this.currentDevProduct) {
+            return;
+        }
+
+        const product = this.products[this.currentDevProduct];
+        if (!product || !product.isDeveloping) {
+            return;
+        }
+
+        // 计算进度
+        const progressPercent = (product.devProgress * 100).toFixed(0);
+        const consumedCost = product.devCost * product.devProgress;
+
+        // 更新进度条宽度
+        const progressBar = document.getElementById(`progress-bar-${this.currentDevProduct}`);
+        if (progressBar) {
+            progressBar.style.width = `${progressPercent}%`;
+        }
+
+        // 更新进度文字
+        const progressText = document.getElementById(`progress-text-${this.currentDevProduct}`);
+        if (progressText) {
+            progressText.textContent = `${progressPercent}% - $${this.formatNumber(consumedCost)}/$${this.formatNumber(product.devCost)}`;
+        }
+    }
+
+    /**
      * 格式化产品开发时间显示
      */
     formatProductTime(seconds) {
@@ -1301,19 +1331,20 @@ class AIEmpireGame {
                 const elapsedTime = this.gameTime - product.devStartTime;
                 const progressPercent = (product.devProgress * 100).toFixed(0);
                 const consumedCost = product.devCost * product.devProgress;
-                
+
                 const card = document.createElement('div');
                 card.className = 'product-card developing';
+                card.id = `developing-card-${key}`;
                 card.innerHTML = `
                     <div class="product-header">
                         <span class="product-emoji">${product.emoji}</span>
                         <div class="product-title">${product.name}</div>
                     </div>
-                    <div class="progress-container">
+                    <div class="progress-container" id="progress-container-${key}">
                         <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: ${progressPercent}%"></div>
+                            <div class="progress-bar-fill" id="progress-bar-${key}" style="width: ${progressPercent}%"></div>
                         </div>
-                        <div class="progress-text">${progressPercent}% - $${this.formatNumber(consumedCost)}/$${this.formatNumber(product.devCost)}</div>
+                        <div class="progress-text" id="progress-text-${key}">${progressPercent}% - $${this.formatNumber(consumedCost)}/$${this.formatNumber(product.devCost)}</div>
                     </div>
                 `;
                 developingContainer.appendChild(card);
@@ -1877,6 +1908,9 @@ class AIEmpireGame {
 
         // 研发按钮状态依赖实时资金和前置条件，做增量刷新避免重建DOM打断点击
         this.updateResearchButtonStates();
+
+        // 更新研发进度条（实时更新）
+        this.updateDevelopmentProgress();
     }
 
     addLog(message, type = 'info') {
