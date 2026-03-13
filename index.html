@@ -174,7 +174,7 @@
                             <div class="challenge-input-row">
                                 <button id="challengeSkipBtn" class="build-btn challenge-submit-btn" onclick="game.skipCalibrationChallenge()" disabled>跳过当前题目（有惩罚）</button>
                             </div>
-                            <div class="challenge-hint" id="challengeHint">提示：连续答对可获得额外修复奖励</div>
+                            <div class="challenge-hint" id="challengeHint"></div>
                             <div class="challenge-result" id="calibrationResult">等待挑战...</div>
                         </div>
                     </div>
@@ -267,12 +267,10 @@
                     </div>
                 </div>
 
-                <aside class="bottom-quickops" aria-label="快捷操作区">
+                <aside class="bottom-quickops" aria-label="战术控制台">
                     <div class="quickops-header">
-                        <h3>⚡ 战术速控台</h3>
-                        <span class="quickops-badge">GPU 快购</span>
+                        <h3>⚡ 战术控制台</h3>
                     </div>
-                    <p class="quickops-desc">仅保留 GPU 购买入口，其余快捷功能已移除。</p>
 
                     <div class="quickops-grid">
                         <button class="quickop-btn quickop-btn-gpu" id="quickBuyGpuBtn" type="button">

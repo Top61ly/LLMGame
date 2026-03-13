@@ -295,7 +295,12 @@ class AIEmpireGame {
         // ========== 快捷操作配置（底部右侧） ==========
         this.quickOps = {
             enabled: true,
-            gpuPurchaseCount: 1,
+            gpu: {
+                enabled: true,
+                purchaseCount: 1,
+                hotkey: '',
+                unlockCondition: 'always',
+            },
         };
 
         this.initGame();
@@ -381,6 +386,7 @@ class AIEmpireGame {
 
     initQuickOps() {
         if (!this.quickOps.enabled) return;
+        if (!this.quickOps.gpu?.enabled) return;
 
         const quickBuyGpuBtn = document.getElementById('quickBuyGpuBtn');
         if (!quickBuyGpuBtn) return;
@@ -393,13 +399,13 @@ class AIEmpireGame {
     }
 
     buyGpuFromQuickOps() {
-        const purchaseCount = Math.max(1, Math.floor(this.quickOps.gpuPurchaseCount || 1));
+        const purchaseCount = Math.max(1, Math.floor(this.quickOps.gpu?.purchaseCount || 1));
         const beforeCount = this.buildings.gpu.count;
         const nextCost = this.calculateBuildingCost('gpu');
 
         if (this.money < nextCost) {
             const shortage = nextCost - this.money;
-            this.addBottomEventLog(`GPU 快购失败：资金不足，还差 $${this.formatNumber(shortage)}`, 'warning');
+            this.addBottomEventLog(`GPU购买失败：资金不足，还差 $${this.formatNumber(shortage)}`, 'warning');
             return;
         }
 
@@ -1277,7 +1283,7 @@ class AIEmpireGame {
             descEl.textContent = '完成挑战后可修复 4-6 个Bug';
         }
         if (hintEl) {
-            hintEl.textContent = '提示：连续答对可获得额外修复奖励';
+            hintEl.textContent = '';
         }
     }
 
