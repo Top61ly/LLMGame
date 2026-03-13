@@ -14,7 +14,7 @@ class AIEmpireGame {
         this.modelName = ''; // 大模型名称
 
         // ========== 核心参数 ==========
-        this.playersGrowthRate = 100; // 用户增长率（初始2%）
+        this.playersGrowthRate = 20; // 用户增长率（初始2%）
         this.hypeValue = 1.0; // Hype 口碑值
         this.hypeTarget = 1.0; // Hype 目标值
         this.marketCapacity = 10000; // 市场容量
@@ -1893,7 +1893,7 @@ class AIEmpireGame {
             saturationBar.style.background = '#B71C1C'; // 深红色 - 赤海炼狱
         }
 
-        document.getElementById('dashArpu').textContent = `$${this.cachedStats.arpu.toFixed(4)}`;
+        document.getElementById('dashArpu').textContent = `$${this.cachedStats.arpu.toFixed(2)}`;
 
         // 更新右侧信息板
         const hours = Math.floor(this.gameTime / 3600);
